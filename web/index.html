@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tesla video viewer</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="top">
+    <div class="brand">
+      <p class="brand-kicker">Model Y clips</p>
+      <h1>Tesla video viewer</h1>
+    </div>
+    <p id="span-readout" class="span-readout">Add clip folders to begin.</p>
+    <div class="top-actions">
+      <button type="button" id="btn-rescan">Rescan</button>
+      <button type="button" id="btn-folders">Folders</button>
+    </div>
+  </header>
+
+  <div id="scan-panel" class="scan-panel" hidden>
+    <p id="scan-status" class="scan-status"></p>
+    <ol id="scan-log" class="scan-log"></ol>
+  </div>
+  <p id="banner" class="banner" hidden></p>
+
+  <main id="library-view">
+    <ul id="source-status" class="source-status" hidden></ul>
+    <p id="empty-state" class="empty" hidden></p>
+    <div id="library-body" hidden>
+      <nav id="month-nav" class="month-nav" aria-label="Months with clips"></nav>
+      <section id="calendar" class="calendar" aria-label="Days with clips"></section>
+      <section id="day-panel" class="day-panel" hidden>
+        <div class="day-panel-head">
+          <h2 id="day-title">Day</h2>
+          <p id="day-meta" class="day-meta"></p>
+        </div>
+        <div id="day-rail" class="day-rail" role="list"></div>
+        <ol id="hour-scale" class="hour-scale"></ol>
+        <ul id="day-events" class="day-events"></ul>
+      </section>
+    </div>
+  </main>
+
+  <section id="viewer-view" class="viewer-view" hidden>
+    <div class="viewer-bar">
+      <button type="button" id="btn-back">Back to day</button>
+      <p id="viewer-title" class="viewer-title"></p>
+      <p id="viewer-clock" class="viewer-clock"></p>
+    </div>
+    <div id="cam-grid" class="cam-grid" data-layout="six"></div>
+    <div class="transport">
+      <button type="button" id="btn-play">Play</button>
+      <button type="button" id="btn-back-10">−10s</button>
+      <button type="button" id="btn-fwd-10">+10s</button>
+      <label class="scrub-wrap">
+        <span class="sr-only">Event time</span>
+        <input id="scrubber" type="range" min="0" max="1" step="0.01" value="0">
+      </label>
+      <p id="scrub-readout" class="scrub-readout">0:00 / 0:00</p>
+      <button type="button" id="btn-show-all" hidden>Show all cameras</button>
+    </div>
+    <div class="dump-bar">
+      <button type="button" id="btn-shot-one" class="dump">Screenshot this camera</button>
+      <button type="button" id="btn-shot-all" class="dump dump-all">Screenshot all cameras</button>
+      <p id="dump-status" class="dump-status"></p>
+      <button type="button" id="btn-open-dump" hidden>Open folder</button>
+    </div>
+  </section>
+
+  <dialog id="folders-dialog" class="folders-dialog">
+    <form method="dialog" id="folders-form">
+      <h2>Folders</h2>
+      <p class="hint">Add every disk or folder that holds Tesla clips. The calendar merges them.</p>
+      <ul id="source-list" class="source-list"></ul>
+      <label>
+        Add clip folder
+        <input id="source-add-input" type="text" spellcheck="false" placeholder="C:\tesla-video">
+      </label>
+      <button type="button" id="btn-add-source">Add folder</button>
+      <label>
+        Screenshot folder
+        <input id="output-dir-input" type="text" spellcheck="false" placeholder="C:\proj\tesla-video-viewer\screenshots">
+      </label>
+      <p class="hint">Full-resolution PNGs go here, one folder per event.</p>
+      <div class="dialog-actions">
+        <button type="submit" value="save" id="btn-save-folders">Save and scan</button>
+        <button type="submit" value="cancel">Cancel</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="app.js"></script>
+</body>
+</html>

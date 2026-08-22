@@ -1,0 +1,8 @@
+{
+  "sources": [
+    "C:/tesla-video"
+  ],
+  "output_dir": "C:/proj/tesla-video-viewer/screenshots",
+  "host": "127.0.0.1",
+  "port": 8765
+}

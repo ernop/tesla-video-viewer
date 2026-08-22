@@ -1,0 +1,562 @@
+:root {
+  --bg: #12110d;
+  --bg-raise: #1c1a14;
+  --ink: #f4efe4;
+  --tan: #e2c98a;
+  --amber: #ffc14d;
+  --amber-deep: #e08900;
+  --red: #e23d2d;
+  --line: #4a3f28;
+  --cell: #221f18;
+  --focus: #ffffff;
+  font-family: "Segoe UI", "Helvetica Neue", sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  min-height: 100%;
+  background: var(--bg);
+  color: var(--ink);
+}
+
+button, input {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  background: var(--bg-raise);
+  border: 1px solid var(--amber);
+  color: var(--amber);
+  padding: 0.45rem 0.8rem;
+  cursor: pointer;
+}
+
+button:hover, button:focus-visible {
+  background: var(--amber);
+  color: #16130c;
+}
+
+button.dump {
+  border-color: var(--red);
+  color: #ffd5d0;
+}
+
+button.dump:hover, button.dump:focus-visible {
+  background: var(--red);
+  color: #fff;
+}
+
+button.dump-all {
+  font-weight: 700;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+}
+
+.top {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 1rem 1.5rem;
+  align-items: end;
+  padding: 1rem 1.25rem 0.85rem;
+  border-bottom: 2px solid var(--amber);
+}
+
+.brand-kicker {
+  margin: 0;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-size: 0.72rem;
+  color: var(--tan);
+}
+
+.brand h1 {
+  margin: 0.1rem 0 0;
+  font-size: 1.55rem;
+  font-weight: 700;
+}
+
+.span-readout {
+  margin: 0;
+  font-family: ui-monospace, "Cascadia Mono", monospace;
+  font-size: 0.92rem;
+  color: var(--tan);
+  align-self: center;
+}
+
+.scan-panel {
+  margin: 0;
+  padding: 0.55rem 1.25rem 0.7rem;
+  background: #2a230f;
+  border-bottom: 1px solid var(--amber);
+}
+
+.scan-status {
+  margin: 0 0 0.45rem;
+  color: var(--amber);
+  font-family: ui-monospace, "Cascadia Mono", monospace;
+  font-size: 0.9rem;
+}
+
+.scan-log {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 11rem;
+  overflow: auto;
+  font-family: ui-monospace, "Cascadia Mono", monospace;
+  font-size: 0.75rem;
+  color: var(--ink);
+}
+
+.scan-log li {
+  white-space: nowrap;
+}
+
+.top-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.banner {
+  margin: 0;
+  padding: 0.65rem 1.25rem;
+  background: #4a140f;
+  color: #ffd8d3;
+}
+
+.empty {
+  margin: 2.5rem 1.25rem;
+  max-width: 40rem;
+  font-size: 1.15rem;
+  line-height: 1.45;
+}
+
+.month-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  padding: 1rem 1.25rem 0.4rem;
+}
+
+.source-status {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin: 0;
+  padding: 0.85rem 1.25rem 0;
+}
+
+.source-status li {
+  border: 1px solid var(--line);
+  background: var(--bg-raise);
+  padding: 0.25rem 0.55rem;
+  font-family: ui-monospace, "Cascadia Mono", monospace;
+  font-size: 0.78rem;
+}
+
+.source-status li.missing {
+  border-color: var(--red);
+  color: #ffd5d0;
+}
+
+.month-nav button[aria-current="true"] {
+  background: var(--amber);
+  color: #16130c;
+}
+
+.calendar {
+  padding: 0.5rem 1.25rem 1rem;
+}
+
+.calendar h2 {
+  margin: 0 0 0.6rem;
+  font-size: 1.35rem;
+}
+
+.dow, .cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 0.35rem;
+  max-width: 52rem;
+}
+
+.dow span {
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--tan);
+  padding: 0 0.2rem 0.3rem;
+}
+
+.cal-day {
+  min-height: 4.4rem;
+  border: 1px solid var(--line);
+  background: var(--cell);
+  color: var(--tan);
+  padding: 0.35rem 0.4rem;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.cal-day:disabled {
+  opacity: 0.35;
+  cursor: default;
+  border-style: dotted;
+}
+
+.cal-day.has-clips {
+  background: var(--amber);
+  color: #16130c;
+  border-color: var(--amber-deep);
+  font-weight: 700;
+}
+
+.cal-day.has-clips:hover, .cal-day.has-clips:focus-visible {
+  background: #ffe08a;
+}
+
+.cal-day[aria-current="true"] {
+  outline: 2px solid var(--focus);
+  outline-offset: 1px;
+}
+
+.cal-day .num {
+  font-size: 1.05rem;
+}
+
+.cal-day .meta {
+  font-family: ui-monospace, "Cascadia Mono", monospace;
+  font-size: 0.72rem;
+  line-height: 1.2;
+}
+
+.day-panel {
+  padding: 0 1.25rem 2rem;
+  max-width: 64rem;
+}
+
+.day-panel-head h2 {
+  margin: 0;
+}
+
+.day-meta {
+  margin: 0.2rem 0 0.8rem;
+  color: var(--tan);
+  font-family: ui-monospace, "Cascadia Mono", monospace;
+}
+
+.day-rail {
+  position: relative;
+  height: 4.6rem;
+  background: var(--bg-raise);
+  border: 1px solid var(--line);
+}
+
+.rail-event {
+  position: absolute;
+  top: 0.85rem;
+  height: 2.8rem;
+  min-width: 0.7rem;
+  background: var(--amber);
+  color: #16130c;
+  border: 0;
+  padding: 0 0.35rem;
+  font-family: ui-monospace, "Cascadia Mono", monospace;
+  font-size: 0.72rem;
+  overflow: hidden;
+}
+
+.rail-event:hover, .rail-event:focus-visible {
+  background: #ffe08a;
+}
+
+.hour-scale {
+  list-style: none;
+  display: flex;
+  justify-content: space-between;
+  margin: 0.25rem 0 1rem;
+  padding: 0;
+  color: var(--tan);
+  font-family: ui-monospace, "Cascadia Mono", monospace;
+  font-size: 0.75rem;
+}
+
+.day-events {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.45rem;
+}
+
+.day-events button {
+  width: 100%;
+  text-align: left;
+  display: grid;
+  grid-template-columns: 8.5rem 5.5rem 8rem 1fr auto;
+  gap: 0.75rem;
+  align-items: baseline;
+}
+
+.kind {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.72rem;
+  color: var(--tan);
+}
+
+.source-tag {
+  font-family: ui-monospace, "Cascadia Mono", monospace;
+  font-size: 0.78rem;
+  color: var(--tan);
+}
+
+.day-events button .kind {
+  color: inherit;
+}
+
+.viewer-view {
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100vh - 5rem);
+}
+
+.viewer-bar {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 1rem;
+  align-items: center;
+  padding: 0.7rem 1rem;
+}
+
+.viewer-title, .viewer-clock {
+  margin: 0;
+  font-family: ui-monospace, "Cascadia Mono", monospace;
+}
+
+.viewer-clock {
+  color: var(--amber);
+  font-size: 1.05rem;
+}
+
+.cam-grid {
+  flex: 1;
+  display: grid;
+  gap: 0.35rem;
+  padding: 0 0.7rem;
+  min-height: 22rem;
+}
+
+.cam-grid[data-layout="six"] {
+  grid-template-columns: 1fr 1.35fr 1fr;
+  grid-template-rows: 1.15fr 0.85fr;
+  grid-template-areas:
+    "lrep front rrep"
+    "lp back rp";
+}
+
+.cam-grid[data-layout="four"] {
+  grid-template-columns: 1fr 1.35fr 1fr;
+  grid-template-rows: 1.15fr 0.85fr;
+  grid-template-areas:
+    "lrep front rrep"
+    "lrep back rrep";
+}
+
+.cam-grid[data-layout="free"] {
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+}
+
+.cam-grid.focus-mode {
+  grid-template-columns: 1fr 13rem;
+  grid-template-rows: none;
+  grid-template-areas: none;
+}
+
+.cam-tile {
+  position: relative;
+  background: #000;
+  min-height: 0;
+  overflow: hidden;
+  border: 1px solid var(--line);
+}
+
+.cam-grid:not(.focus-mode) .cam-tile[data-area="lrep"] { grid-area: lrep; }
+.cam-grid:not(.focus-mode) .cam-tile[data-area="front"] { grid-area: front; }
+.cam-grid:not(.focus-mode) .cam-tile[data-area="rrep"] { grid-area: rrep; }
+.cam-grid:not(.focus-mode) .cam-tile[data-area="lp"] { grid-area: lp; }
+.cam-grid:not(.focus-mode) .cam-tile[data-area="back"] { grid-area: back; }
+.cam-grid:not(.focus-mode) .cam-tile[data-area="rp"] { grid-area: rp; }
+
+.cam-grid.focus-mode .cam-tile {
+  grid-area: auto;
+}
+
+.cam-grid.focus-mode .cam-tile.focused {
+  grid-column: 1;
+  grid-row: 1 / span 6;
+}
+
+.cam-grid.focus-mode .cam-tile:not(.focused) {
+  grid-column: 2;
+}
+
+.cam-tile video {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background: #000;
+  display: block;
+}
+
+.cam-tile .label {
+  position: absolute;
+  left: 0.4rem;
+  top: 0.35rem;
+  margin: 0;
+  padding: 0.1rem 0.35rem;
+  background: #16130c;
+  color: var(--amber);
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.cam-tile .missing {
+  position: absolute;
+  inset: 0;
+  display: none;
+  place-items: center;
+  margin: 0;
+  color: var(--tan);
+  background: #16130c;
+}
+
+.cam-tile .missing:not([hidden]) {
+  display: grid;
+}
+
+.cam-tile.focused {
+  border-color: var(--amber);
+}
+
+.transport, .dump-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.7rem;
+  align-items: center;
+  padding: 0.7rem 1rem 1rem;
+}
+
+.scrub-wrap {
+  flex: 1;
+  min-width: 12rem;
+}
+
+.scrub-wrap input {
+  width: 100%;
+  accent-color: var(--amber);
+}
+
+.scrub-readout, .dump-status {
+  margin: 0;
+  font-family: ui-monospace, "Cascadia Mono", monospace;
+  color: var(--tan);
+}
+
+.folders-dialog {
+  background: var(--bg-raise);
+  color: var(--ink);
+  border: 1px solid var(--amber);
+  padding: 1rem 1.1rem 1.1rem;
+  width: min(36rem, 92vw);
+}
+
+.folders-dialog::backdrop {
+  background: rgb(0 0 0 / 0.65);
+}
+
+.folders-dialog h2 {
+  margin: 0 0 0.8rem;
+}
+
+.folders-dialog label {
+  display: grid;
+  gap: 0.3rem;
+  margin: 0.6rem 0 0.2rem;
+}
+
+.folders-dialog input {
+  background: var(--bg);
+  border: 1px solid var(--line);
+  padding: 0.45rem 0.5rem;
+}
+
+.source-list {
+  list-style: none;
+  margin: 0 0 0.6rem;
+  padding: 0;
+  display: grid;
+  gap: 0.35rem;
+}
+
+.source-list li {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.5rem;
+  align-items: center;
+  border: 1px solid var(--line);
+  padding: 0.35rem 0.45rem;
+  font-family: ui-monospace, "Cascadia Mono", monospace;
+  font-size: 0.85rem;
+}
+
+#btn-add-source {
+  margin: 0.35rem 0 0.8rem;
+}
+
+.hint {
+  margin: 0 0 0.4rem;
+  color: var(--tan);
+  font-size: 0.85rem;
+}
+
+.dialog-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+@media (max-width: 800px) {
+  .top {
+    grid-template-columns: 1fr;
+  }
+
+  .day-events button {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .cam-grid[data-layout="six"],
+  .cam-grid[data-layout="four"] {
+    grid-template-columns: 1fr 1fr;
+    grid-template-areas:
+      "front front"
+      "lrep rrep"
+      "lp rp"
+      "back back";
+  }
+}

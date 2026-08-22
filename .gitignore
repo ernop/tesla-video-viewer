@@ -1,0 +1,15 @@
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+config.json
+clip-index.sqlite3
+clip-index.sqlite3-wal
+clip-index.sqlite3-shm
+screenshots/
+clips/
+*.mp4
+*.MP4
+.DS_Store
+Thumbs.db
