@@ -23,8 +23,23 @@ from app.indexer import (
     scan_into_index,
 )
 from app.location import enrich_event_location, map_url
-from app.media import MediaError, extract_png, probe_duration, require_tool
-from app.plates import PlateBusy, PlateError, crop_path, start_plate_scan, status_for
+from app.media import MediaError, extract_png, extract_png_region, probe_duration, probe_video_size, require_tool
+from app.plates import (
+    PlateBusy,
+    PlateError,
+    catalog_payload,
+    configure_plates,
+    crop_path,
+    find_hit,
+    frame_path,
+    normalize_plate,
+    plate_dossier,
+    start_plate_scan,
+    status_for,
+    still_path,
+    vehicle_crop_box,
+    vehicle_path,
+)
 from app.scan import (
     DEFAULT_SEGMENT_SEC,
     Event,
@@ -326,6 +341,7 @@ def create_app(config: AppConfig, *, background_scan: bool = True) -> FastAPI:
     global _config, _store
     _config = config
     _store = ClipIndex(index_path_for(config.path))
+    configure_plates(_store)
     try:
         rebuild_library_from_index()
     except OSError as exc:
@@ -540,6 +556,31 @@ def create_app(config: AppConfig, *, background_scan: bool = True) -> FastAPI:
             "failures": failures,
         }
 
+    @app.get("/api/plates")
+    def plate_catalog() -> dict[str, object]:
+        get_store()
+        return catalog_payload()
+
+    @app.get("/api/plates/crops/{crop_id}")
+    def any_plate_crop(crop_id: str) -> FileResponse:
+        path = crop_path(crop_id)
+        if not path.is_file():
+            raise HTTPException(status_code=404, detail="Plate crop is gone. Scan the event again.")
+        return FileResponse(
+            path,
+            media_type="image/jpeg",
+            filename=f"{crop_id}.jpg",
+            headers={"Cache-Control": "private, max-age=3600"},
+        )
+
+    @app.get("/api/plates/{text}")
+    def plate_page(text: str) -> dict[str, object]:
+        dossier = plate_dossier(text, _library)
+        if dossier is None:
+            key = normalize_plate(text) or text
+            raise HTTPException(status_code=404, detail=f"No stored sightings for {key}.")
+        return dossier
+
     @app.get("/api/events/{event_id}/plates")
     def plate_status(event_id: str) -> dict[str, object]:
         get_event(event_id)
@@ -550,6 +591,7 @@ def create_app(config: AppConfig, *, background_scan: bool = True) -> FastAPI:
         event = get_event(event_id)
         try:
             probe_event(event)
+            enrich_event_location(event)
         except MediaError as exc:
             raise HTTPException(status_code=500, detail=str(exc)) from exc
         try:
@@ -569,6 +611,110 @@ def create_app(config: AppConfig, *, background_scan: bool = True) -> FastAPI:
             path,
             media_type="image/jpeg",
             filename=f"{crop_id}.jpg",
+            headers={"Cache-Control": "private, max-age=3600"},
+        )
+
+    @app.get("/api/events/{event_id}/plates/crops/{crop_id}/still")
+    def plate_still(event_id: str, crop_id: str) -> FileResponse:
+        event = get_event(event_id)
+        hit = find_hit(event_id, crop_id)
+        if hit is None:
+            raise HTTPException(status_code=404, detail="No plate hit with that crop.")
+        dest = still_path(crop_id)
+        if dest.is_file() and dest.stat().st_size > 0:
+            return FileResponse(
+                dest,
+                media_type="image/png",
+                filename=f"{crop_id}-still.png",
+                headers={"Cache-Control": "private, max-age=3600"},
+            )
+        box = hit.get("bbox") if isinstance(hit.get("bbox"), dict) else None
+        if box is None:
+            raise HTTPException(status_code=404, detail="That plate hit has no box.")
+        camera = str(hit.get("camera") or "")
+        elapsed = float(hit.get("elapsedSec") or 0)
+        resolved = event.segment_for(camera, elapsed)
+        if resolved is None:
+            raise HTTPException(status_code=404, detail="No clip at that plate time.")
+        segment, offset = resolved
+        try:
+            extract_png_region(
+                segment.path,
+                offset,
+                int(box["x1"]),
+                int(box["y1"]),
+                int(box["x2"]),
+                int(box["y2"]),
+                dest,
+            )
+        except (KeyError, TypeError, ValueError, MediaError) as exc:
+            raise HTTPException(status_code=500, detail=str(exc)) from exc
+        return FileResponse(
+            dest,
+            media_type="image/png",
+            filename=f"{crop_id}-still.png",
+            headers={"Cache-Control": "private, max-age=3600"},
+        )
+
+    def _appearance_clip(event_id: str, crop_id: str):
+        event = get_event(event_id)
+        hit = find_hit(event_id, crop_id)
+        if hit is None:
+            raise HTTPException(status_code=404, detail="No plate hit with that crop.")
+        camera = str(hit.get("camera") or "")
+        elapsed = float(hit.get("elapsedSec") or 0)
+        resolved = event.segment_for(camera, elapsed)
+        if resolved is None:
+            raise HTTPException(status_code=404, detail="No clip at that plate time.")
+        segment, offset = resolved
+        return hit, segment, offset
+
+    @app.get("/api/events/{event_id}/plates/crops/{crop_id}/frame")
+    def plate_frame(event_id: str, crop_id: str) -> FileResponse:
+        dest = frame_path(crop_id)
+        if dest.is_file() and dest.stat().st_size > 0:
+            return FileResponse(
+                dest,
+                media_type="image/png",
+                filename=f"{crop_id}-frame.png",
+                headers={"Cache-Control": "private, max-age=3600"},
+            )
+        _hit, segment, offset = _appearance_clip(event_id, crop_id)
+        try:
+            extract_png(segment.path, offset, dest)
+        except MediaError as exc:
+            raise HTTPException(status_code=500, detail=str(exc)) from exc
+        return FileResponse(
+            dest,
+            media_type="image/png",
+            filename=f"{crop_id}-frame.png",
+            headers={"Cache-Control": "private, max-age=3600"},
+        )
+
+    @app.get("/api/events/{event_id}/plates/crops/{crop_id}/vehicle")
+    def plate_vehicle(event_id: str, crop_id: str) -> FileResponse:
+        dest = vehicle_path(crop_id)
+        if dest.is_file() and dest.stat().st_size > 0:
+            return FileResponse(
+                dest,
+                media_type="image/png",
+                filename=f"{crop_id}-vehicle.png",
+                headers={"Cache-Control": "private, max-age=3600"},
+            )
+        hit, segment, offset = _appearance_clip(event_id, crop_id)
+        box = hit.get("bbox") if isinstance(hit.get("bbox"), dict) else None
+        if box is None:
+            raise HTTPException(status_code=404, detail="That plate hit has no box.")
+        try:
+            frame_w, frame_h = probe_video_size(segment.path)
+            left, top, right, bottom = vehicle_crop_box(box, frame_w, frame_h)
+            extract_png_region(segment.path, offset, left, top, right, bottom, dest, pad=0)
+        except (KeyError, TypeError, ValueError, MediaError) as exc:
+            raise HTTPException(status_code=500, detail=str(exc)) from exc
+        return FileResponse(
+            dest,
+            media_type="image/png",
+            filename=f"{crop_id}-vehicle.png",
             headers={"Cache-Control": "private, max-age=3600"},
         )
 

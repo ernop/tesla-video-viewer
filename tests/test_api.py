@@ -35,6 +35,7 @@ def test_library_and_day_routes(tmp_path: Path) -> None:
     home = client.get("/")
     assert home.status_code == 200
     assert b"Tesla video viewer" in home.content
+    assert b"All plates" in home.content
     library = client.get("/api/library").json()
     assert library["clipCount"] == 4
     assert library["sources"][0]["available"] is True

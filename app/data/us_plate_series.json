@@ -1,0 +1,3368 @@
+{
+  "meta": {
+    "retrieved": "2026-08-21",
+    "sources": [
+      "https://en.wikipedia.org/wiki/United_States_license_plate_designs_and_serial_formats",
+      "https://en.wikipedia.org/wiki/Vehicle_registration_plates_of_California",
+      "https://github.com/openalpr/openalpr/blob/master/runtime_data/postprocess/us.patterns"
+    ]
+  },
+  "jurisdictions": [
+    {
+      "code": "AL",
+      "name": "Alabama",
+      "neighbors": [
+        "FL",
+        "GA",
+        "MS",
+        "TN"
+      ],
+      "bbox": [
+        30.22,
+        -88.47,
+        35.01,
+        -84.89
+      ],
+      "series": [
+        {
+          "id": "al-pass-1",
+          "label": "Passenger, 1-digit county",
+          "kind": "passenger",
+          "status": "current",
+          "issued": "2022-present",
+          "mask": "#LL####",
+          "weight": 1.0,
+          "example": "1AB2345",
+          "skip": [
+            "I",
+            "O",
+            "Q"
+          ]
+        },
+        {
+          "id": "al-pass-2",
+          "label": "Passenger, 2-digit county",
+          "kind": "passenger",
+          "status": "current",
+          "issued": "2022-present",
+          "mask": "##LL###",
+          "weight": 1.0,
+          "example": "12AB345",
+          "skip": [
+            "I",
+            "O",
+            "Q"
+          ]
+        },
+        {
+          "id": "al-pass-alt",
+          "label": "Passenger alternate",
+          "kind": "passenger",
+          "status": "current",
+          "issued": "2022-present",
+          "mask": "#L##L##",
+          "weight": 0.9,
+          "example": "1A23B45",
+          "skip": [
+            "I",
+            "O",
+            "Q"
+          ]
+        },
+        {
+          "id": "al-pass-alt2",
+          "label": "Passenger alternate",
+          "kind": "passenger",
+          "status": "current",
+          "issued": "2022-present",
+          "mask": "##L##L#",
+          "weight": 0.9,
+          "example": "12A34B5",
+          "skip": [
+            "I",
+            "O",
+            "Q"
+          ]
+        },
+        {
+          "id": "al-opt-ab12345",
+          "label": "Optional God Bless America",
+          "kind": "passenger",
+          "status": "still_valid",
+          "issued": "2007-2013",
+          "mask": "LL#####",
+          "weight": 0.4,
+          "example": "AB12345"
+        },
+        {
+          "id": "al-opt-12345ab",
+          "label": "Optional God Bless America",
+          "kind": "passenger",
+          "status": "still_valid",
+          "issued": "2007-2013",
+          "mask": "#####LL",
+          "weight": 0.4,
+          "example": "12345AB"
+        }
+      ]
+    },
+    {
+      "code": "AK",
+      "name": "Alaska",
+      "neighbors": [],
+      "bbox": [
+        51.22,
+        -179.15,
+        71.44,
+        -129.98
+      ],
+      "series": [
+        {
+          "id": "ak-pass",
+          "label": "Passenger",
+          "kind": "passenger",
+          "status": "current",
+          "issued": "2010-present",
+          "mask": "LLL###",
+          "weight": 1.0,
+          "example": "ABC123",
+          "skip": [
+            "I",
+            "O",
+            "Q"
+          ]
+        }
+      ]
+    },
+    {
+      "code": "AZ",
+      "name": "Arizona",
+      "neighbors": [
+        "CA",
+        "CO",
+        "NM",
+        "NV",
+        "UT"
+      ],
+      "bbox": [
+        31.33,
+        -114.82,
+        37.0,
+        -109.04
+      ],
+      "series": [
+        {
+          "id": "az-pass-2021",
+          "label": "Passenger alphabet soup",
+          "kind": "passenger",
+          "status": "current",
+          "issued": "2021-present",
+          "mask": "AAA#AA",
+          "weight": 0.45,
+          "example": "ABC1DE",
+          "skip": [
+            "I",
+            "O",
+            "Q",
+            "U"
+          ]
+        },
+        {
+          "id": "az-pass-2020",
+          "label": "Passenger 2020-2021",
+          "kind": "passenger",
+          "status": "still_valid",
+          "issued": "2020-2021",
+          "mask": "AAA#AAA",
+          "weight": 0.5,
+          "example": "ABC1DEF",
+          "skip": [
+            "I",
+            "O",
+            "Q",
+            "U"
+          ]
+        },
+        {
+          "id": "az-pass-2008",
+          "label": "Passenger 2008-2020",
+          "kind": "passenger",
+          "status": "still_valid",
+          "issued": "2008-2020",
+          "mask": "LLL####",
+          "weight": 1.0,
+          "example": "ABC1234",
+          "skip": [
+            "I",
+            "O",
+            "Q",
+            "U"
+          ]
+        },
+        {
+          "id": "az-pass-1996",
+          "label": "Passenger 1996-2008",
+          "kind": "passenger",
+          "status": "still_valid",
+          "issued": "1996-2008",
+          "mask": "###LLL",
+          "weight": 1.0,
+          "example": "123ABC",
+          "skip": [
+            "I",
+            "O",
+            "Q",
+            "U"
+          ]
+        },
+        {
+          "id": "az-pass-1980",
+          "label": "Passenger 1980-1996",
+          "kind": "passenger",
+          "status": "still_valid",
+          "issued": "1980-1996",
+          "mask": "LLL###",
+          "weight": 0.7,
+          "example": "ABC123",
+          "skip": [
+            "I",
+            "O",
+            "Q",
+            "U"
+          ]
+        }
+      ]
+    },
+    {
+      "code": "AR",
+      "name": "Arkansas",
+      "neighbors": [
+        "LA",
+        "MO",
+        "MS",
+        "OK",
+        "TN",
+        "TX"
+      ],
+      "bbox": [
+        33.0,
+        -94.62,
+        36.5,
+        -89.64
+      ],
+      "series": [
+        {
+          "id": "ar-pass",
+          "label": "Passenger",
+          "kind": "passenger",
+          "status": "current",
+          "issued": "2021-present",
+          "mask": "LLL##L",
+          "weight": 1.0,
+          "example": "ABC12D",
+          "skip": [
+            "O",
+            "Q"
+          ]
+        },
+        {
+          "id": "ar-pass-2006",
+          "label": "Passenger 2006-2021",
+          "kind": "passenger",
+          "status": "still_valid",
+          "issued": "2006-2021",
+          "mask": "###LLL",
+          "weight": 1.0,
+          "example": "123ABC",
+          "skip": [
+            "O",
+            "Q"
+          ]
+        }
+      ]
+    },
+    {
+      "code": "CA",
+      "name": "California",
+      "neighbors": [
+        "AZ",
+        "NV",
+        "OR"
+      ],
+      "bbox": [
+        32.53,
+        -124.48,
+        42.01,
+        -114.13
+      ],
+      "series": [
+        {
+          "id": "ca-pass-2026",
+          "label": "Passenger 2026\u2013present",
+          "kind": "passenger",
+          "status": "current",
+          "issued": "2026-present",
+          "mask": "###LLL#",
+          "weight": 1.0,
+          "example": "123ABC1",
+          "skip": [
+            "I",
+            "O",
+            "Q"
+          ],
+          "ioqOnly": [
+            4
+          ]
+        },
+        {
+          "id": "ca-pass-1980",
+          "label": "Passenger 1980\u20132026",
+          "kind": "passenger",
+          "status": "still_valid",
+          "issued": "1980-2026",
+          "mask": "#LLL###",
+          "weight": 1.05,
+          "example": "7ABC123",
+          "skip": [
+            "I",
+            "O",
+            "Q"
+          ],
+          "ioqOnly": [
+            2
+          ]
+        },
+        {
+          "id": "ca-pass-1969",
+          "label": "Passenger 1969\u20131980",
+          "kind": "passenger",
+          "status": "still_valid",
+          "issued": "1969-1980",
+          "mask": "###LLL",
+          "weight": 0.7,
+          "example": "123ABC",
+          "skip": [
+            "I",
+            "O",
+            "Q"
+          ]
+        },
+        {
+          "id": "ca-pass-1963",
+          "label": "Passenger 1963\u20131969",
+          "kind": "passenger",
+          "status": "still_valid",
+          "issued": "1963-1969",
+          "mask": "LLL###",
+          "weight": 0.65,
+          "example": "ABC123"
+        },
+        {
+          "id": "ca-comm-2010",
+          "label": "Commercial 2010\u2013present",
+          "kind": "commercial",
+          "status": "current",
+          "issued": "2010-present",
+          "mask": "#####L#",
+          "weight": 1.0,
+          "example": "12345A1",
+          "skip": [
+            "I",
+            "O",
+            "Q"
+          ]
+        },
+        {
+          "id": "ca-comm-1976",
+          "label": "Commercial 1976\u20132010",
+          "kind": "commercial",
+          "status": "still_valid",
+          "issued": "1976-2010",
+          "mask": "#L#####",
+          "weight": 0.9,
+          "example": "1A12345",
+          "skip": [
+            "I",
+            "O",
+            "Q"
+          ]
+        },
+        {
+          "id": "ca-mc-1982",
+          "label": "Motorcycle 1982\u2013present",
+          "kind": "motorcycle",
+          "status": "current",
+          "issued": "1982-present",
+          "mask": "##L####",
+          "weight": 1.0,
+          "example": "12A1234",
+          "skip": [
+            "I",
+            "O",
+            "Q"
+          ]
+        },
+        {
+          "id": "ca-mc-1970",
+          "label": "Motorcycle 1970\u20131987",
+          "kind": "motorcycle",
+          "status": "still_valid",
+          "issued": "1970-1987",
+          "mask": "#L####",
+          "weight": 0.7,
+          "example": "1A1234",
+          "skip": [
+            "I",
+            "O",
+            "Q"
+          ]
+        },
+        {
+          "id": "ca-pti",
+          "label": "Permanent trailer",
+          "kind": "trailer",
+          "status": "current",
+          "issued": "2001-present",
+          "mask": "4LL####",
+          "weight": 1.0,
+          "example": "4AB1234",
+          "skip": [
+            "I",
+            "O",
+            "Q"
+          ]
+        },
+        {
+          "id": "ca-trailer",
+          "label": "Trailer",
+          "kind": "trailer",
+          "status": "current",
+          "issued": "1983-present",
+          "mask": "1LL####",
+          "weight": 1.0,
+          "example": "1AB1234",
+          "skip": [
+            "I",
+            "O",
+            "Q"
+          ]
+        },
+        {
+          "id": "ca-apportioned",
+          "label": "Apportioned",
+          "kind": "commercial",
+          "status": "current",
+          "issued": "1982-present",
+          "mask": "LL#####",
+          "weight": 0.8,
+          "example": "AP12345",
+          "regex": "^[A-Z]P[0-9]{5}$"
+        },
+        {
+          "id": "ca-temp",
+          "label": "Temporary paper",
+          "kind": "temporary",
+          "status": "current",
+          "issued": "2019-present",
+          "mask": "LL##L##",
+          "weight": 0.7,
+          "example": "AB12C34",
+          "skip": [
+            "I",
+            "O",
+            "Q"
+          ]
+        },
+        {
+          "id": "ca-tractor",
+          "label": "Tractor trailer",
+          "kind": "commercial",
+          "status": "current",
+          "issued": "1987-present",
+          "mask": "9L#####",
+          "weight": 0.85,
+          "example": "9A12345",
+          "skip": [
+            "I",
+            "O",
+            "Q"
+          ]
+        },
+        {
+          "id": "ca-disabled",
+          "label": "Disabled person",
+          "kind": "disabled",
+          "status": "current",
+          "issued": "1995-present",
+          "mask": null,
+          "weight": 0.8,
+          "example": "AB123DP",
+          "regex": "^([0-9]{5}DP|DP[0-9]{5}|DP[A-Z][0-9]{4}|[0-9]{4}[A-Z]DP|DP[0-9]{3}[A-Z]{2}|[A-Z]{2}[0-9]{3}DP)$"
+        },
+        {
+          "id": "ca-legacy",
+          "label": "Legacy gold-on-black",
+          "kind": "specialty",
+          "status": "current",
+          "issued": "2015-present",
+          "mask": "L###L#",
+          "weight": 0.45,
+          "example": "B123A4"
+        }
+      ]
+    },
+    {
+      "code": "CO",
+      "name": "Colorado",
+      "neighbors": [
+        "AZ",
+        "KS",
+        "NE",
+        "NM",
+        "OK",
+        "UT",
+        "WY"
+      ],
+      "bbox": [
+        36.99,
+        -109.06,
+        41.0,
+        -102.04
+      ],
+      "series": [
+        {
+          "id": "co-pass",
+          "label": "Passenger",
+          "kind": "passenger",
+          "status": "current",
+          "issued": "2018-present",
+          "mask": "LLLL##",
+          "weight": 1.0,
+          "example": "ABCD12"
+        },
+        {
+          "id": "co-pass-2015",
+          "label": "Passenger 2015-2018",
+          "kind": "passenger",
+          "status": "still_valid",
+          "issued": "2015-2018",
+          "mask": "LLL###",
+          "weight": 1.0,
+          "example": "ABC123"
+        },
+        {
+          "id": "co-pass-2000",
+          "label": "Passenger 2000-2015",
+          "kind": "passenger",
+          "status": "still_valid",
+          "issued": "2000-2015",
+          "mask": "###LLL",
+          "weight": 1.0,
+          "example": "123ABC"
+        },
+        {
+          "id": "co-pass-old",
+          "label": "Passenger county-coded",
+          "kind": "passenger",
+          "status": "still_valid",
+          "issued": "1977-2000",
+          "mask": "LL####",
+          "weight": 0.55,
+          "example": "AB1234"
+        }
+      ]
+    },
+    {
+      "code": "CT",
+      "name": "Connecticut",
+      "neighbors": [
+        "MA",
+        "NY",
+        "RI"
+      ],
+      "bbox": [
+        40.98,
+        -73.73,
+        42.05,
+        -71.79
+      ],
+      "series": [
+        {
+          "id": "ct-pass",
+          "label": "Passenger",
+          "kind": "passenger",
+          "status": "current",
+          "issued": "2015-present",
+          "mask": "LL#####",
+          "weight": 1.0,
+          "example": "AB12345",
+          "skip": [
+            "I",
+            "O",
+            "Q"
+          ]
+        },
+        {
+          "id": "ct-pass-2013",
+          "label": "Passenger 2013-2015",
+          "kind": "passenger",
+          "status": "still_valid",
+          "issued": "2013-2015",
+          "mask": "#LLLL#",
+          "weight": 0.7,
+          "example": "1ABCD2",
+          "skip": [
+            "I",
+            "O",
+            "Q"
+          ]
+        },
+        {
+          "id": "ct-pass-2000",
+          "label": "Passenger 2000-2013",
+          "kind": "passenger",
+          "status": "still_valid",
+          "issued": "2000-2013",
+          "mask": "###LLL",
+          "weight": 1.0,
+          "example": "123ABC"
+        }
+      ]
+    },
+    {
+      "code": "DE",
+      "name": "Delaware",
+      "neighbors": [
+        "MD",
+        "NJ",
+        "PA"
+      ],
+      "bbox": [
+        38.45,
+        -75.79,
+        39.84,
+        -75.05
+      ],
+      "series": [
+        {
+          "id": "de-pass-6",
+          "label": "Passenger",
+          "kind": "passenger",
+          "status": "current",
+          "issued": "1969-present",
+          "mask": "######",
+          "weight": 0.85,
+          "example": "123456"
+        },
+        {
+          "id": "de-pass-5",
+          "label": "Passenger 5-digit",
+          "kind": "passenger",
+          "status": "current",
+          "issued": "1969-present",
+          "mask": "#####",
+          "weight": 0.7,
+          "example": "12345"
+        },
+        {
+          "id": "de-pass-4",
+          "label": "Passenger 4-digit",
+          "kind": "passenger",
+          "status": "current",
+          "issued": "1969-present",
+          "mask": "####",
+          "weight": 0.55,
+          "example": "1234"
+        },
+        {
+          "id": "de-pass-3",
+          "label": "Passenger 3-digit",
+          "kind": "passenger",
+          "status": "current",
+          "issued": "1969-present",
+          "mask": "###",
+          "weight": 0.35,
+          "example": "123"
+        }
+      ]
+    },
+    {
+      "code": "DC",
+      "name": "District of Columbia",
+      "neighbors": [
+        "MD",
+        "VA"
+      ],
+      "bbox": [
+        38.79,
+        -77.12,
+        38.99,
+        -76.91
+      ],
+      "series": [
+        {
+          "id": "dc-pass",
+          "label": "Passenger",
+          "kind": "passenger",
+          "status": "current",
+          "issued": "2017-present",
+          "mask": "LL####",
+          "weight": 1.0,
+          "example": "AB1234",
+          "skip": [
+            "I",
+            "O",
+            "Q"
+          ]
+        },
+        {
+          "id": "dc-pass-old",
+          "label": "Passenger numeric",
+          "kind": "passenger",
+          "status": "still_valid",
+          "issued": "1991-1997",
+          "mask": "######",
+          "weight": 0.5,
+          "example": "123456"
+        }
+      ]
+    },
+    {
+      "code": "FL",
+      "name": "Florida",
+      "neighbors": [
+        "AL",
+        "GA"
+      ],
+      "bbox": [
+        24.52,
+        -87.63,
+        31.0,
+        -80.03
+      ],
+      "series": [
+        {
+          "id": "fl-pass",
+          "label": "Passenger Sunshine State",
+          "kind": "passenger",
+          "status": "current",
+          "issued": "2003-present",
+          "mask": "LLLL##",
+          "weight": 1.0,
+          "example": "ABCD12",
+          "skip": [
+            "O"
+          ]
+        },
+        {
+          "id": "fl-pass-county",
+          "label": "Passenger county name",
+          "kind": "passenger",
+          "status": "current",
+          "issued": "2003-present",
+          "mask": "##LLLL",
+          "weight": 0.95,
+          "example": "12ABCD",
+          "skip": [
+            "O"
+          ]
+        },
+        {
+          "id": "fl-igwt",
+          "label": "In God We Trust",
+          "kind": "passenger",
+          "status": "current",
+          "issued": "2008-present",
+          "mask": "LL##LL",
+          "weight": 0.8,
+          "example": "AB12CD",
+          "skip": [
+            "O"
+          ]
+        },
+        {
+          "id": "fl-old-a123bc",
+          "label": "Former passenger",
+          "kind": "passenger",
+          "status": "still_valid",
+          "issued": "",
+          "mask": "L###LL",
+          "weight": 0.45,
+          "example": "A123BC",
+          "skip": [
+            "O"
+          ]
+        },
+        {
+          "id": "fl-old-123abc",
+          "label": "Former passenger",
+          "kind": "passenger",
+          "status": "still_valid",
+          "issued": "",
+          "mask": "###LLL",
+          "weight": 0.45,
+          "example": "123ABC",
+          "skip": [
+            "O"
+          ]
+        },
+        {
+          "id": "fl-old-abc123",
+          "label": "Former passenger",
+          "kind": "passenger",
+          "status": "still_valid",
+          "issued": "",
+          "mask": "LLL###",
+          "weight": 0.45,
+          "example": "ABC123",
+          "skip": [
+            "O"
+          ]
+        },
+        {
+          "id": "fl-old-1234ab",
+          "label": "Former passenger",
+          "kind": "passenger",
+          "status": "still_valid",
+          "issued": "",
+          "mask": "####LL",
+          "weight": 0.45,
+          "example": "1234AB",
+          "skip": [
+            "O"
+          ]
+        },
+        {
+          "id": "fl-old-a12bcd",
+          "label": "Former passenger",
+          "kind": "passenger",
+          "status": "still_valid",
+          "issued": "",
+          "mask": "L##LLL",
+          "weight": 0.4,
+          "example": "A12BCD",
+          "skip": [
+            "O"
+          ]
+        },
+        {
+          "id": "fl-old-ab123c",
+          "label": "Former passenger",
+          "kind": "passenger",
+          "status": "still_valid",
+          "issued": "",
+          "mask": "LL###L",
+          "weight": 0.4,
+          "example": "AB123C",
+          "skip": [
+            "O"
+          ]
+        },
+        {
+          "id": "fl-old-a1234b",
+          "label": "Former passenger",
+          "kind": "passenger",
+          "status": "still_valid",
+          "issued": "",
+          "mask": "L####L",
+          "weight": 0.4,
+          "example": "A1234B",
+          "skip": [
+            "O"
+          ]
+        }
+      ]
+    },
+    {
+      "code": "GA",
+      "name": "Georgia",
+      "neighbors": [
+        "AL",
+        "FL",
+        "NC",
+        "SC",
+        "TN"
+      ],
+      "bbox": [
+        30.36,
+        -85.61,
+        35.0,
+        -80.84
+      ],
+      "series": [
+        {
+          "id": "ga-pass",
+          "label": "Passenger",
+          "kind": "passenger",
+          "status": "current",
+          "issued": "2012-present",
+          "mask": "LLL####",
+          "weight": 1.0,
+          "example": "ABC1234",
+          "skip": [
+            "O"
+          ]
+        },
+        {
+          "id": "ga-alt-2026",
+          "label": "250th anniversary",
+          "kind": "passenger",
+          "status": "current",
+          "issued": "2026-present",
+          "mask": "LLL#LL",
+          "weight": 0.6,
+          "example": "ABC1DE",
+          "skip": [
+            "O"
+          ]
+        },
+        {
+          "id": "ga-alt-2026b",
+          "label": "250th anniversary",
+          "kind": "passenger",
+          "status": "current",
+          "issued": "2026-present",
+          "mask": "LL#LLL",
+          "weight": 0.6,
+          "example": "AB1CDE",
+          "skip": [
+            "O"
+          ]
+        },
+        {
+          "id": "ga-old-123abc",
+          "label": "Passenger 1997-2003",
+          "kind": "passenger",
+          "status": "still_valid",
+          "issued": "1997-2003",
+          "mask": "###LLL",
+          "weight": 0.55,
+          "example": "123ABC"
+        }
+      ]
+    },
+    {
+      "code": "HI",
+      "name": "Hawaii",
+      "neighbors": [],
+      "bbox": [
+        18.91,
+        -178.33,
+        28.4,
+        -154.81
+      ],
+      "series": [
+        {
+          "id": "hi-pass",
+          "label": "Passenger, county-coded",
+          "kind": "passenger",
+          "status": "current",
+          "issued": "1991-present",
+          "mask": "LLL###",
+          "weight": 1.0,
+          "example": "ABC123",
+          "skip": [
+            "I",
+            "O",
+            "Q"
+          ]
+        }
+      ]
+    },
+    {
+      "code": "ID",
+      "name": "Idaho",
+      "neighbors": [
+        "MT",
+        "NV",
+        "OR",
+        "UT",
+        "WA",
+        "WY"
+      ],
+      "bbox": [
+        41.99,
+        -117.24,
+        49.0,
+        -111.04
+      ],
+      "series": [
+        {
+          "id": "id-pass",
+          "label": "Passenger county + U",
+          "kind": "passenger",
+          "status": "current",
+          "issued": "2020-present",
+          "mask": null,
+          "weight": 0.7,
+          "example": "1A1234U",
+          "regex": "^[0-9]{0,2}[A-Z]{1,3}[0-9]{1,4}[UPV]$"
+        },
+        {
+          "id": "id-pass-old",
+          "label": "Passenger county numeric",
+          "kind": "passenger",
+          "status": "still_valid",
+          "issued": "1991-2020",
+          "mask": null,
+          "weight": 0.4,
+          "example": "1A12345",
+          "regex": "^[0-9]?[A-Z][0-9]{3,6}$"
+        }
+      ]
+    },
+    {
+      "code": "IL",
+      "name": "Illinois",
+      "neighbors": [
+        "IA",
+        "IN",
+        "KY",
+        "MO",
+        "WI"
+      ],
+      "bbox": [
+        36.97,
+        -91.51,
+        42.51,
+        -87.5
+      ],
+      "series": [
+        {
+          "id": "il-pass",
+          "label": "Passenger",
+          "kind": "passenger",
+          "status": "current",
+          "issued": "2017-present",
+          "mask": "LL#####",
+          "weight": 1.0,
+          "example": "AB12345",
+          "skip": [
+            "I",
+            "O"
+          ]
+        },
+        {
+          "id": "il-pass-2017",
+          "label": "Passenger 2017",
+          "kind": "passenger",
+          "status": "still_valid",
+          "issued": "2017",
+          "mask": "LL#####",
+          "weight": 0.5,
+          "example": "AB12345",
+          "skip": [
+            "I",
+            "O"
+          ]
+        },
+        {
+          "id": "il-pass-2006",
+          "label": "Passenger 2006-2016",
+          "kind": "passenger",
+          "status": "still_valid",
+          "issued": "2006-2016",
+          "mask": "L######",
+          "weight": 0.6,
+          "example": "A123456",
+          "skip": [
+            "I",
+            "O"
+          ]
+        },
+        {
+          "id": "il-pass-2001",
+          "label": "Passenger 2001-2006",
+          "kind": "passenger",
+          "status": "still_valid",
+          "issued": "2001-2006",
+          "mask": "#######",
+          "weight": 0.55,
+          "example": "1234567"
+        }
+      ]
+    },
+    {
+      "code": "IN",
+      "name": "Indiana",
+      "neighbors": [
+        "IL",
+        "KY",
+        "MI",
+        "OH"
+      ],
+      "bbox": [
+        37.77,
+        -88.1,
+        41.76,
+        -84.78
+      ],
+      "series": [
+        {
+          "id": "in-pass-7",
+          "label": "Passenger random 7",
+          "kind": "passenger",
+          "status": "current",
+          "issued": "2017-present",
+          "mask": "###L###",
+          "weight": 0.7,
+          "example": "123A456"
+        },
+        {
+          "id": "in-pass-6",
+          "label": "Passenger random 6",
+          "kind": "passenger",
+          "status": "current",
+          "issued": "2017-present",
+          "mask": "###LLL",
+          "weight": 0.55,
+          "example": "123ABC"
+        },
+        {
+          "id": "in-pass-5",
+          "label": "Passenger random 5",
+          "kind": "passenger",
+          "status": "current",
+          "issued": "2017-present",
+          "mask": "###LL",
+          "weight": 0.35,
+          "example": "123AB"
+        },
+        {
+          "id": "in-igwt",
+          "label": "In God We Trust",
+          "kind": "passenger",
+          "status": "current",
+          "issued": "2012-present",
+          "mask": "LLL###",
+          "weight": 0.7,
+          "example": "ABC123"
+        }
+      ]
+    },
+    {
+      "code": "IA",
+      "name": "Iowa",
+      "neighbors": [
+        "IL",
+        "MN",
+        "MO",
+        "NE",
+        "SD",
+        "WI"
+      ],
+      "bbox": [
+        40.38,
+        -96.64,
+        43.5,
+        -90.14
+      ],
+      "series": [
+        {
+          "id": "ia-pass",
+          "label": "Passenger",
+          "kind": "passenger",
+          "status": "current",
+          "issued": "2018-present",
+          "mask": "LLL###",
+          "weight": 1.0,
+          "example": "ABC123"
+        },
+        {
+          "id": "ia-pass-1997",
+          "label": "Passenger 1997-2018",
+          "kind": "passenger",
+          "status": "still_valid",
+          "issued": "1997-2018",
+          "mask": "###LLL",
+          "weight": 1.0,
+          "example": "123ABC"
+        }
+      ]
+    },
+    {
+      "code": "KS",
+      "name": "Kansas",
+      "neighbors": [
+        "CO",
+        "MO",
+        "NE",
+        "OK"
+      ],
+      "bbox": [
+        36.99,
+        -102.05,
+        40.0,
+        -94.59
+      ],
+      "series": [
+        {
+          "id": "ks-pass",
+          "label": "Passenger",
+          "kind": "passenger",
+          "status": "current",
+          "issued": "2024-present",
+          "mask": "####LLL",
+          "weight": 1.0,
+          "example": "1234ABC",
+          "skip": [
+            "I",
+            "O",
+            "Q"
+          ]
+        },
+        {
+          "id": "ks-pass-2018",
+          "label": "Passenger 2018-2023",
+          "kind": "passenger",
+          "status": "still_valid",
+          "issued": "2018-2023",
+          "mask": "###LLL",
+          "weight": 1.0,
+          "example": "123ABC",
+          "skip": [
+            "I",
+            "O",
+            "Q"
+          ]
+        }
+      ]
+    },
+    {
+      "code": "KY",
+      "name": "Kentucky",
+      "neighbors": [
+        "IL",
+        "IN",
+        "MO",
+        "OH",
+        "TN",
+        "VA",
+        "WV"
+      ],
+      "bbox": [
+        36.5,
+        -89.57,
+        39.15,
+        -81.96
+      ],
+      "series": [
+        {
+          "id": "ky-pass",
+          "label": "Passenger",
+          "kind": "passenger",
+          "status": "current",
+          "issued": "2020-present",
+          "mask": "L#L###",
+          "weight": 0.9,
+          "example": "A1B234",
+          "skip": [
+            "I",
+            "O",
+            "Q",
+            "U"
+          ]
+        },
+        {
+          "id": "ky-pass-abc",
+          "label": "Passenger",
+          "kind": "passenger",
+          "status": "current",
+          "issued": "2020-present",
+          "mask": "LLL###",
+          "weight": 1.0,
+          "example": "ABC123",
+          "skip": [
+            "I",
+            "O",
+            "Q",
+            "U"
+          ]
+        },
+        {
+          "id": "ky-old",
+          "label": "Passenger 2005-2020",
+          "kind": "passenger",
+          "status": "still_valid",
+          "issued": "2005-2020",
+          "mask": "###LLL",
+          "weight": 1.0,
+          "example": "123ABC",
+          "skip": [
+            "I",
+            "O",
+            "Q",
+            "U"
+          ]
+        }
+      ]
+    },
+    {
+      "code": "LA",
+      "name": "Louisiana",
+      "neighbors": [
+        "AR",
+        "MS",
+        "TX"
+      ],
+      "bbox": [
+        28.93,
+        -94.04,
+        33.02,
+        -88.82
+      ],
+      "series": [
+        {
+          "id": "la-pass",
+          "label": "Passenger",
+          "kind": "passenger",
+          "status": "current",
+          "issued": "2016-present",
+          "mask": "###LLL",
+          "weight": 1.0,
+          "example": "123ABC"
+        },
+        {
+          "id": "la-old",
+          "label": "Passenger 1993-2015",
+          "kind": "passenger",
+          "status": "still_valid",
+          "issued": "1993-2015",
+          "mask": "LLL###",
+          "weight": 0.7,
+          "example": "ABC123"
+        }
+      ]
+    },
+    {
+      "code": "ME",
+      "name": "Maine",
+      "neighbors": [
+        "NH"
+      ],
+      "bbox": [
+        43.06,
+        -71.08,
+        47.46,
+        -66.95
+      ],
+      "series": [
+        {
+          "id": "me-pass",
+          "label": "Passenger",
+          "kind": "passenger",
+          "status": "current",
+          "issued": "2025-present",
+          "mask": "###LLL",
+          "weight": 1.0,
+          "example": "123ABC",
+          "skip": [
+            "I",
+            "O"
+          ]
+        },
+        {
+          "id": "me-old",
+          "label": "Passenger older",
+          "kind": "passenger",
+          "status": "still_valid",
+          "issued": "",
+          "mask": "####LL",
+          "weight": 0.55,
+          "example": "1234AB",
+          "skip": [
+            "I",
+            "O"
+          ]
+        }
+      ]
+    },
+    {
+      "code": "MD",
+      "name": "Maryland",
+      "neighbors": [
+        "DE",
+        "DC",
+        "PA",
+        "VA",
+        "WV"
+      ],
+      "bbox": [
+        37.91,
+        -79.49,
+        39.72,
+        -75.05
+      ],
+      "series": [
+        {
+          "id": "md-pass",
+          "label": "Passenger",
+          "kind": "passenger",
+          "status": "current",
+          "issued": "2016-present",
+          "mask": "#LL####",
+          "weight": 1.0,
+          "example": "1AB2345",
+          "skip": [
+            "I",
+            "O",
+            "Q",
+            "U",
+            "E",
+            "F"
+          ]
+        },
+        {
+          "id": "md-pass-2010",
+          "label": "Passenger 2010-2016",
+          "kind": "passenger",
+          "status": "still_valid",
+          "issued": "2010-2016",
+          "mask": "#L#####",
+          "weight": 0.55,
+          "example": "1A12345",
+          "skip": [
+            "I",
+            "O",
+            "Q",
+            "U"
+          ]
+        },
+        {
+          "id": "md-pass-2005",
+          "label": "Passenger 2005-2010",
+          "kind": "passenger",
+          "status": "still_valid",
+          "issued": "2004-2010",
+          "mask": "#LLL##",
+          "weight": 0.45,
+          "example": "1ABC23"
+        },
+        {
+          "id": "md-pass-1986",
+          "label": "Passenger 1986-2004",
+          "kind": "passenger",
+          "status": "still_valid",
+          "issued": "1986-2004",
+          "mask": "LLL###",
+          "weight": 0.65,
+          "example": "ABC123"
+        }
+      ]
+    },
+    {
+      "code": "MA",
+      "name": "Massachusetts",
+      "neighbors": [
+        "CT",
+        "NH",
+        "NY",
+        "RI",
+        "VT"
+      ],
+      "bbox": [
+        41.24,
+        -73.51,
+        42.89,
+        -69.93
+      ],
+      "series": [
+        {
+          "id": "ma-pass",
+          "label": "Passenger Jan-Sep",
+          "kind": "passenger",
+          "status": "current",
+          "issued": "1988-present",
+          "mask": "#LLL##",
+          "weight": 1.0,
+          "example": "1ABC23",
+          "skip": [
+            "I",
+            "O",
+            "Q",
+            "U"
+          ]
+        },
+        {
+          "id": "ma-pass-oct",
+          "label": "Passenger October",
+          "kind": "passenger",
+          "status": "current",
+          "issued": "1988-present",
+          "mask": "###L##",
+          "weight": 0.7,
+          "example": "123A40",
+          "skip": [
+            "I",
+            "O",
+            "Q",
+            "U"
+          ]
+        },
+        {
+          "id": "ma-old-123abc",
+          "label": "Passenger older",
+          "kind": "passenger",
+          "status": "still_valid",
+          "issued": "",
+          "mask": "###LLL",
+          "weight": 0.5,
+          "example": "123ABC",
+          "skip": [
+            "I",
+            "O",
+            "Q",
+            "U"
+          ]
+        },
+        {
+          "id": "ma-old-1234ab",
+          "label": "Passenger older",
+          "kind": "passenger",
+          "status": "still_valid",
+          "issued": "",
+          "mask": "####LL",
+          "weight": 0.45,
+          "example": "1234AB",
+          "skip": [
+            "I",
+            "O",
+            "Q",
+            "U"
+          ]
+        },
+        {
+          "id": "ma-old-12ab34",
+          "label": "Passenger older",
+          "kind": "passenger",
+          "status": "still_valid",
+          "issued": "",
+          "mask": "##LL##",
+          "weight": 0.45,
+          "example": "12AB34",
+          "skip": [
+            "I",
+            "O",
+            "Q",
+            "U"
+          ]
+        },
+        {
+          "id": "ma-old-numeric",
+          "label": "Passenger numeric",
+          "kind": "passenger",
+          "status": "still_valid",
+          "issued": "1977-1993",
+          "mask": "######",
+          "weight": 0.4,
+          "example": "123456"
+        }
+      ]
+    },
+    {
+      "code": "MI",
+      "name": "Michigan",
+      "neighbors": [
+        "IN",
+        "OH",
+        "WI"
+      ],
+      "bbox": [
+        41.7,
+        -90.42,
+        48.31,
+        -82.41
+      ],
+      "series": [
+        {
+          "id": "mi-pass",
+          "label": "Passenger",
+          "kind": "passenger",
+          "status": "current",
+          "issued": "2013-present",
+          "mask": "LLL####",
+          "weight": 1.0,
+          "example": "ABC1234",
+          "skip": [
+            "I",
+            "O"
+          ]
+        },
+        {
+          "id": "mi-opt-12abc3",
+          "label": "Water Wonderland",
+          "kind": "specialty",
+          "status": "current",
+          "issued": "2024-present",
+          "mask": "##LLL#",
+          "weight": 0.55,
+          "example": "12ABC3",
+          "skip": [
+            "I",
+            "O"
+          ]
+        },
+        {
+          "id": "mi-opt-1abc23",
+          "label": "Water-Winter Wonderland",
+          "kind": "specialty",
+          "status": "current",
+          "issued": "2021-present",
+          "mask": "#LLL##",
+          "weight": 0.5,
+          "example": "1ABC23",
+          "skip": [
+            "I",
+            "O"
+          ]
+        },
+        {
+          "id": "mi-opt-abc123",
+          "label": "Mackinac Bridge",
+          "kind": "specialty",
+          "status": "current",
+          "issued": "2014-present",
+          "mask": "LLL###",
+          "weight": 0.5,
+          "example": "ABC123",
+          "skip": [
+            "I",
+            "O"
+          ]
+        }
+      ]
+    },
+    {
+      "code": "MN",
+      "name": "Minnesota",
+      "neighbors": [
+        "IA",
+        "ND",
+        "SD",
+        "WI"
+      ],
+      "bbox": [
+        43.5,
+        -97.24,
+        49.38,
+        -89.49
+      ],
+      "series": [
+        {
+          "id": "mn-pass-num",
+          "label": "Passenger",
+          "kind": "passenger",
+          "status": "current",
+          "issued": "2009-present",
+          "mask": "###LLL",
+          "weight": 1.0,
+          "example": "123ABC",
+          "skip": [
+            "I",
+            "O",
+            "Q"
+          ]
+        },
+        {
+          "id": "mn-pass-let",
+          "label": "Passenger swapped",
+          "kind": "passenger",
+          "status": "current",
+          "issued": "2009-present",
+          "mask": "LLL###",
+          "weight": 1.0,
+          "example": "ABC123",
+          "skip": [
+            "I",
+            "O",
+            "Q"
+          ]
+        }
+      ]
+    },
+    {
+      "code": "MS",
+      "name": "Mississippi",
+      "neighbors": [
+        "AL",
+        "AR",
+        "LA",
+        "TN"
+      ],
+      "bbox": [
+        30.17,
+        -91.66,
+        35.0,
+        -88.1
+      ],
+      "series": [
+        {
+          "id": "ms-pass",
+          "label": "Passenger",
+          "kind": "passenger",
+          "status": "current",
+          "issued": "2024-present",
+          "mask": "LLL###",
+          "weight": 1.0,
+          "example": "ABC123",
+          "skip": [
+            "O"
+          ]
+        }
+      ]
+    },
+    {
+      "code": "MO",
+      "name": "Missouri",
+      "neighbors": [
+        "AR",
+        "IA",
+        "IL",
+        "KS",
+        "KY",
+        "NE",
+        "OK",
+        "TN"
+      ],
+      "bbox": [
+        35.99,
+        -95.77,
+        40.61,
+        -89.1
+      ],
+      "series": [
+        {
+          "id": "mo-pass",
+          "label": "Passenger month-coded",
+          "kind": "passenger",
+          "status": "current",
+          "issued": "2018-present",
+          "mask": "LL#L#L",
+          "weight": 1.0,
+          "example": "AB1C2D",
+          "skip": [
+            "I",
+            "O",
+            "Q"
+          ]
+        },
+        {
+          "id": "mo-old",
+          "label": "Passenger older",
+          "kind": "passenger",
+          "status": "still_valid",
+          "issued": "",
+          "mask": "###LLL",
+          "weight": 0.5,
+          "example": "123ABC",
+          "skip": [
+            "I",
+            "O",
+            "Q"
+          ]
+        }
+      ]
+    },
+    {
+      "code": "MT",
+      "name": "Montana",
+      "neighbors": [
+        "ID",
+        "ND",
+        "SD",
+        "WY"
+      ],
+      "bbox": [
+        44.36,
+        -116.05,
+        49.0,
+        -104.04
+      ],
+      "series": [
+        {
+          "id": "mt-pass-1",
+          "label": "Passenger 1-digit county",
+          "kind": "passenger",
+          "status": "current",
+          "issued": "2025-present",
+          "mask": null,
+          "weight": 1.0,
+          "example": "1AB1234",
+          "skip": [
+            "I",
+            "O",
+            "Q",
+            "R",
+            "V"
+          ],
+          "regex": "^[0-9][A-Z]{2}[0-9]{4}$"
+        },
+        {
+          "id": "mt-pass-2",
+          "label": "Passenger 2-digit county",
+          "kind": "passenger",
+          "status": "current",
+          "issued": "2025-present",
+          "mask": null,
+          "weight": 1.0,
+          "example": "12AB123",
+          "skip": [
+            "I",
+            "O",
+            "Q",
+            "R",
+            "V"
+          ],
+          "regex": "^[0-9]{2}[A-Z]{2}[0-9]{3}$"
+        },
+        {
+          "id": "mt-opt",
+          "label": "Optional replica",
+          "kind": "specialty",
+          "status": "current",
+          "issued": "2010-present",
+          "mask": "LLL###",
+          "weight": 0.5,
+          "example": "ABC123"
+        },
+        {
+          "id": "mt-old",
+          "label": "Passenger older",
+          "kind": "passenger",
+          "status": "still_valid",
+          "issued": "",
+          "mask": null,
+          "weight": 0.4,
+          "example": "112345A",
+          "regex": "^[0-9]{1,2}[0-9]{4}[A-Z]$"
+        }
+      ]
+    },
+    {
+      "code": "NE",
+      "name": "Nebraska",
+      "neighbors": [
+        "CO",
+        "IA",
+        "KS",
+        "MO",
+        "SD",
+        "WY"
+      ],
+      "bbox": [
+        39.99,
+        -104.05,
+        43.0,
+        -95.31
+      ],
+      "series": [
+        {
+          "id": "ne-metro",
+          "label": "Passenger Douglas/Lancaster/Sarpy",
+          "kind": "passenger",
+          "status": "current",
+          "issued": "2023-present",
+          "mask": "LLL###",
+          "weight": 1.0,
+          "example": "ABC123",
+          "skip": [
+            "I",
+            "M",
+            "O",
+            "Q",
+            "W",
+            "X"
+          ]
+        },
+        {
+          "id": "ne-county",
+          "label": "Passenger county-coded",
+          "kind": "passenger",
+          "status": "current",
+          "issued": "2023-present",
+          "mask": null,
+          "weight": 0.65,
+          "example": "1A1234",
+          "skip": [
+            "I",
+            "M",
+            "O",
+            "Q",
+            "W",
+            "X"
+          ],
+          "regex": "^[0-9]{1,2}[A-Z]{1,2}[0-9]{2,4}$"
+        }
+      ]
+    },
+    {
+      "code": "NV",
+      "name": "Nevada",
+      "neighbors": [
+        "AZ",
+        "CA",
+        "ID",
+        "OR",
+        "UT"
+      ],
+      "bbox": [
+        35.0,
+        -120.01,
+        42.0,
+        -114.04
+      ],
+      "series": [
+        {
+          "id": "nv-pass-a",
+          "label": "Passenger",
+          "kind": "passenger",
+          "status": "current",
+          "issued": "2016-present",
+          "mask": "####L#",
+          "weight": 0.85,
+          "example": "4321A5",
+          "skip": [
+            "I",
+            "O",
+            "Q"
+          ]
+        },
+        {
+          "id": "nv-pass-b",
+          "label": "Passenger",
+          "kind": "passenger",
+          "status": "current",
+          "issued": "2016-present",
+          "mask": "###L##",
+          "weight": 0.8,
+          "example": "345A12",
+          "skip": [
+            "I",
+            "O",
+            "Q"
+          ]
+        },
+        {
+          "id": "nv-pass-c",
+          "label": "Passenger",
+          "kind": "passenger",
+          "status": "current",
+          "issued": "2016-present",
+          "mask": "##L###",
+          "weight": 0.8,
+          "example": "12A345",
+          "skip": [
+            "I",
+            "O",
+            "Q"
+          ]
+        },
+        {
+          "id": "nv-old",
+          "label": "Passenger 2001-2017",
+          "kind": "passenger",
+          "status": "still_valid",
+          "issued": "2001-2017",
+          "mask": "###LLL",
+          "weight": 1.0,
+          "example": "123ABC",
+          "skip": [
+            "I",
+            "O",
+            "Q"
+          ]
+        },
+        {
+          "id": "nv-old-abc",
+          "label": "Passenger older",
+          "kind": "passenger",
+          "status": "still_valid",
+          "issued": "",
+          "mask": "LLL###",
+          "weight": 0.5,
+          "example": "ABC123",
+          "skip": [
+            "I",
+            "O",
+            "Q"
+          ]
+        }
+      ]
+    },
+    {
+      "code": "NH",
+      "name": "New Hampshire",
+      "neighbors": [
+        "MA",
+        "ME",
+        "VT"
+      ],
+      "bbox": [
+        42.7,
+        -72.56,
+        45.31,
+        -70.7
+      ],
+      "series": [
+        {
+          "id": "nh-pass",
+          "label": "Passenger",
+          "kind": "passenger",
+          "status": "current",
+          "issued": "2000-present",
+          "mask": "#######",
+          "weight": 1.0,
+          "example": "1234567"
+        },
+        {
+          "id": "nh-old",
+          "label": "Passenger 1999",
+          "kind": "passenger",
+          "status": "still_valid",
+          "issued": "1999",
+          "mask": "######",
+          "weight": 0.45,
+          "example": "123456"
+        },
+        {
+          "id": "nh-old-abc",
+          "label": "Passenger older",
+          "kind": "passenger",
+          "status": "still_valid",
+          "issued": "",
+          "mask": "LLL###",
+          "weight": 0.4,
+          "example": "ABC123"
+        }
+      ]
+    },
+    {
+      "code": "NJ",
+      "name": "New Jersey",
+      "neighbors": [
+        "DE",
+        "NY",
+        "PA"
+      ],
+      "bbox": [
+        38.93,
+        -75.56,
+        41.36,
+        -73.89
+      ],
+      "series": [
+        {
+          "id": "nj-pass",
+          "label": "Passenger",
+          "kind": "passenger",
+          "status": "current",
+          "issued": "2010-present",
+          "mask": "L##LLL",
+          "weight": 1.0,
+          "example": "D12ABC",
+          "skip": [
+            "I",
+            "O",
+            "Q"
+          ]
+        },
+        {
+          "id": "nj-pass-1999",
+          "label": "Passenger 1999-2010",
+          "kind": "passenger",
+          "status": "still_valid",
+          "issued": "1999-2010",
+          "mask": "LLL##L",
+          "weight": 1.0,
+          "example": "ABC12D",
+          "skip": [
+            "I",
+            "O",
+            "Q"
+          ]
+        },
+        {
+          "id": "nj-pass-1993",
+          "label": "Passenger 1993-1999",
+          "kind": "passenger",
+          "status": "still_valid",
+          "issued": "1993-1999",
+          "mask": "LL###L",
+          "weight": 1.0,
+          "example": "AB123C",
+          "skip": [
+            "I",
+            "O",
+            "Q"
+          ]
+        },
+        {
+          "id": "nj-pass-1992",
+          "label": "Passenger 1992-1993",
+          "kind": "passenger",
+          "status": "still_valid",
+          "issued": "1992-1993",
+          "mask": "LLL####",
+          "weight": 0.55,
+          "example": "ABC1234",
+          "skip": [
+            "I",
+            "O",
+            "Q"
+          ]
+        },
+        {
+          "id": "nj-old-abc123",
+          "label": "Passenger older",
+          "kind": "passenger",
+          "status": "still_valid",
+          "issued": "",
+          "mask": "LLL###",
+          "weight": 0.5,
+          "example": "ABC123",
+          "skip": [
+            "I",
+            "O",
+            "Q"
+          ]
+        },
+        {
+          "id": "nj-old-123abc",
+          "label": "Passenger older",
+          "kind": "passenger",
+          "status": "still_valid",
+          "issued": "",
+          "mask": "###LLL",
+          "weight": 0.5,
+          "example": "123ABC",
+          "skip": [
+            "I",
+            "O",
+            "Q"
+          ]
+        }
+      ]
+    },
+    {
+      "code": "NM",
+      "name": "New Mexico",
+      "neighbors": [
+        "AZ",
+        "CO",
+        "OK",
+        "TX",
+        "UT"
+      ],
+      "bbox": [
+        31.33,
+        -109.05,
+        37.0,
+        -103.0
+      ],
+      "series": [
+        {
+          "id": "nm-pass",
+          "label": "Passenger yellow",
+          "kind": "passenger",
+          "status": "current",
+          "issued": "1989-present",
+          "mask": "###LLL",
+          "weight": 1.0,
+          "example": "123ABC",
+          "skip": [
+            "I",
+            "O",
+            "Q",
+            "U",
+            "V"
+          ]
+        },
+        {
+          "id": "nm-alt",
+          "label": "Passenger turquoise",
+          "kind": "passenger",
+          "status": "current",
+          "issued": "2010-present",
+          "mask": "LLL###",
+          "weight": 1.0,
+          "example": "ABC123",
+          "skip": [
+            "I",
+            "O",
+            "Q",
+            "U",
+            "V"
+          ]
+        },
+        {
+          "id": "nm-chile",
+          "label": "Chile Capital",
+          "kind": "passenger",
+          "status": "current",
+          "issued": "2017-present",
+          "mask": "LLLL##",
+          "weight": 0.7,
+          "example": "ABCD12",
+          "skip": [
+            "I",
+            "O",
+            "Q",
+            "U",
+            "V"
+          ]
+        }
+      ]
+    },
+    {
+      "code": "NY",
+      "name": "New York",
+      "neighbors": [
+        "CT",
+        "MA",
+        "NJ",
+        "PA",
+        "VT"
+      ],
+      "bbox": [
+        40.5,
+        -79.76,
+        45.02,
+        -71.86
+      ],
+      "series": [
+        {
+          "id": "ny-pass",
+          "label": "Passenger",
+          "kind": "passenger",
+          "status": "current",
+          "issued": "2020-present",
+          "mask": "LLL####",
+          "weight": 1.0,
+          "example": "ABC1234",
+          "skip": [
+            "I",
+            "O",
+            "Q"
+          ]
+        },
+        {
+          "id": "ny-old-6",
+          "label": "Passenger 6-character",
+          "kind": "passenger",
+          "status": "still_valid",
+          "issued": "",
+          "mask": "LLL###",
+          "weight": 0.5,
+          "example": "ABC123",
+          "skip": [
+            "I",
+            "O",
+            "Q"
+          ]
+        }
+      ]
+    },
+    {
+      "code": "NC",
+      "name": "North Carolina",
+      "neighbors": [
+        "GA",
+        "SC",
+        "TN",
+        "VA"
+      ],
+      "bbox": [
+        33.84,
+        -84.32,
+        36.59,
+        -75.46
+      ],
+      "series": [
+        {
+          "id": "nc-pass",
+          "label": "Passenger",
+          "kind": "passenger",
+          "status": "current",
+          "issued": "1985-present",
+          "mask": "LLL####",
+          "weight": 1.0,
+          "example": "ABC1234",
+          "skip": [
+            "G",
+            "I",
+            "O",
+            "Q",
+            "U"
+          ]
+        },
+        {
+          "id": "nc-old",
+          "label": "Passenger 1982-1985",
+          "kind": "passenger",
+          "status": "still_valid",
+          "issued": "1982-1985",
+          "mask": "LLL###",
+          "weight": 0.5,
+          "example": "ABC123",
+          "skip": [
+            "G",
+            "I",
+            "O",
+            "Q",
+            "U"
+          ]
+        }
+      ]
+    },
+    {
+      "code": "ND",
+      "name": "North Dakota",
+      "neighbors": [
+        "MN",
+        "MT",
+        "SD"
+      ],
+      "bbox": [
+        45.94,
+        -104.05,
+        49.0,
+        -96.55
+      ],
+      "series": [
+        {
+          "id": "nd-pass",
+          "label": "Passenger",
+          "kind": "passenger",
+          "status": "current",
+          "issued": "2016-present",
+          "mask": "###LLL",
+          "weight": 1.0,
+          "example": "123ABC"
+        }
+      ]
+    },
+    {
+      "code": "OH",
+      "name": "Ohio",
+      "neighbors": [
+        "IN",
+        "KY",
+        "MI",
+        "PA",
+        "WV"
+      ],
+      "bbox": [
+        38.4,
+        -84.82,
+        42.33,
+        -80.52
+      ],
+      "series": [
+        {
+          "id": "oh-pass",
+          "label": "Passenger",
+          "kind": "passenger",
+          "status": "current",
+          "issued": "2004-present",
+          "mask": "LLL####",
+          "weight": 1.0,
+          "example": "ABC1234",
+          "skip": [
+            "I",
+            "O"
+          ],
+          "ioqOnly": [
+            1
+          ]
+        },
+        {
+          "id": "oh-old-ab12cd",
+          "label": "Bicentennial",
+          "kind": "passenger",
+          "status": "still_valid",
+          "issued": "2001-2003",
+          "mask": "LL##LL",
+          "weight": 0.4,
+          "example": "AB12CD"
+        }
+      ]
+    },
+    {
+      "code": "OK",
+      "name": "Oklahoma",
+      "neighbors": [
+        "AR",
+        "CO",
+        "KS",
+        "MO",
+        "NM",
+        "TX"
+      ],
+      "bbox": [
+        33.62,
+        -103.0,
+        37.0,
+        -94.43
+      ],
+      "series": [
+        {
+          "id": "ok-pass",
+          "label": "Passenger",
+          "kind": "passenger",
+          "status": "current",
+          "issued": "2024-present",
+          "mask": "LLL###",
+          "weight": 1.0,
+          "example": "ABC123"
+        },
+        {
+          "id": "ok-old",
+          "label": "Passenger 2017-2024",
+          "kind": "passenger",
+          "status": "still_valid",
+          "issued": "2017-2024",
+          "mask": "LLL###",
+          "weight": 0.6,
+          "example": "ABC123"
+        }
+      ]
+    },
+    {
+      "code": "OR",
+      "name": "Oregon",
+      "neighbors": [
+        "CA",
+        "ID",
+        "NV",
+        "WA"
+      ],
+      "bbox": [
+        41.99,
+        -124.57,
+        46.29,
+        -116.46
+      ],
+      "series": [
+        {
+          "id": "or-pass",
+          "label": "Passenger",
+          "kind": "passenger",
+          "status": "current",
+          "issued": "2004-present",
+          "mask": "###LLL",
+          "weight": 1.0,
+          "example": "123ABC",
+          "skip": [
+            "I",
+            "O"
+          ]
+        },
+        {
+          "id": "or-old",
+          "label": "Passenger 1990-2004",
+          "kind": "passenger",
+          "status": "still_valid",
+          "issued": "1990-2004",
+          "mask": "LLL###",
+          "weight": 1.0,
+          "example": "ABC123",
+          "skip": [
+            "I",
+            "O"
+          ]
+        }
+      ]
+    },
+    {
+      "code": "PA",
+      "name": "Pennsylvania",
+      "neighbors": [
+        "DE",
+        "MD",
+        "NJ",
+        "NY",
+        "OH",
+        "WV"
+      ],
+      "bbox": [
+        39.72,
+        -80.52,
+        42.27,
+        -74.69
+      ],
+      "series": [
+        {
+          "id": "pa-pass",
+          "label": "Passenger",
+          "kind": "passenger",
+          "status": "current",
+          "issued": "2025-present",
+          "mask": "LLL####",
+          "weight": 1.0,
+          "example": "NBC1234",
+          "skip": [
+            "I",
+            "O",
+            "Q",
+            "U"
+          ],
+          "skipAt": {
+            "1": [
+              "A",
+              "E"
+            ]
+          }
+        },
+        {
+          "id": "pa-old",
+          "label": "Passenger 1999-2004",
+          "kind": "passenger",
+          "status": "still_valid",
+          "issued": "1999-2025",
+          "mask": "LLL####",
+          "weight": 0.8,
+          "example": "ABC1234",
+          "skip": [
+            "I",
+            "O",
+            "Q",
+            "U"
+          ],
+          "skipAt": {
+            "1": [
+              "A",
+              "E"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "code": "RI",
+      "name": "Rhode Island",
+      "neighbors": [
+        "CT",
+        "MA"
+      ],
+      "bbox": [
+        41.15,
+        -71.86,
+        42.02,
+        -71.12
+      ],
+      "series": [
+        {
+          "id": "ri-pass",
+          "label": "Passenger",
+          "kind": "passenger",
+          "status": "current",
+          "issued": "2023-present",
+          "mask": "#LL###",
+          "weight": 1.0,
+          "example": "1AB234",
+          "skip": [
+            "O"
+          ]
+        },
+        {
+          "id": "ri-old-6",
+          "label": "Passenger numeric",
+          "kind": "passenger",
+          "status": "still_valid",
+          "issued": "",
+          "mask": "######",
+          "weight": 0.35,
+          "example": "123456"
+        },
+        {
+          "id": "ri-old-ll",
+          "label": "Passenger older",
+          "kind": "passenger",
+          "status": "still_valid",
+          "issued": "",
+          "mask": "LL###",
+          "weight": 0.35,
+          "example": "AB123",
+          "skip": [
+            "O"
+          ]
+        }
+      ]
+    },
+    {
+      "code": "SC",
+      "name": "South Carolina",
+      "neighbors": [
+        "GA",
+        "NC"
+      ],
+      "bbox": [
+        32.05,
+        -83.35,
+        35.22,
+        -78.54
+      ],
+      "series": [
+        {
+          "id": "sc-pass",
+          "label": "Passenger",
+          "kind": "passenger",
+          "status": "current",
+          "issued": "2026-present",
+          "mask": "###LLL",
+          "weight": 1.0,
+          "example": "123ABC"
+        },
+        {
+          "id": "sc-old",
+          "label": "Passenger 2016-2026",
+          "kind": "passenger",
+          "status": "still_valid",
+          "issued": "2016-2026",
+          "mask": "LLL###",
+          "weight": 1.0,
+          "example": "ABC123"
+        },
+        {
+          "id": "sc-igwt",
+          "label": "In God We Trust",
+          "kind": "specialty",
+          "status": "current",
+          "issued": "2016-present",
+          "mask": "####LL",
+          "weight": 0.55,
+          "example": "1234AB"
+        }
+      ]
+    },
+    {
+      "code": "SD",
+      "name": "South Dakota",
+      "neighbors": [
+        "IA",
+        "MN",
+        "MT",
+        "ND",
+        "NE",
+        "WY"
+      ],
+      "bbox": [
+        42.48,
+        -104.06,
+        45.94,
+        -96.44
+      ],
+      "series": [
+        {
+          "id": "sd-pass-1",
+          "label": "Passenger 1-digit county",
+          "kind": "passenger",
+          "status": "current",
+          "issued": "2023-present",
+          "mask": null,
+          "weight": 0.7,
+          "example": "1A1234",
+          "skip": [
+            "I",
+            "O",
+            "Q"
+          ],
+          "regex": "^[0-9][A-Z][0-9]{4}$"
+        },
+        {
+          "id": "sd-pass-1b",
+          "label": "Passenger 1-digit county letters",
+          "kind": "passenger",
+          "status": "current",
+          "issued": "2023-present",
+          "mask": null,
+          "weight": 0.7,
+          "example": "1AB123",
+          "skip": [
+            "I",
+            "O",
+            "Q"
+          ],
+          "regex": "^[0-9][A-Z]{2}[0-9]{3}$"
+        },
+        {
+          "id": "sd-pass-2",
+          "label": "Passenger 2-digit county",
+          "kind": "passenger",
+          "status": "current",
+          "issued": "2023-present",
+          "mask": null,
+          "weight": 0.7,
+          "example": "12A123",
+          "skip": [
+            "I",
+            "O",
+            "Q"
+          ],
+          "regex": "^[0-9]{2}[A-Z][0-9]{3}$"
+        }
+      ]
+    },
+    {
+      "code": "TN",
+      "name": "Tennessee",
+      "neighbors": [
+        "AL",
+        "AR",
+        "GA",
+        "KY",
+        "MO",
+        "MS",
+        "NC",
+        "VA"
+      ],
+      "bbox": [
+        34.98,
+        -90.31,
+        36.68,
+        -81.65
+      ],
+      "series": [
+        {
+          "id": "tn-pass",
+          "label": "Passenger",
+          "kind": "passenger",
+          "status": "current",
+          "issued": "2023-present",
+          "mask": "LLL####",
+          "weight": 1.0,
+          "example": "BCD1234",
+          "skip": [
+            "A",
+            "E",
+            "I",
+            "O",
+            "U"
+          ]
+        },
+        {
+          "id": "tn-igwt",
+          "label": "In God We Trust",
+          "kind": "passenger",
+          "status": "current",
+          "issued": "2023-present",
+          "mask": "###LLLL",
+          "weight": 0.75,
+          "example": "123BCDE",
+          "skip": [
+            "A",
+            "E",
+            "I",
+            "O",
+            "U"
+          ]
+        },
+        {
+          "id": "tn-old",
+          "label": "Passenger older",
+          "kind": "passenger",
+          "status": "still_valid",
+          "issued": "",
+          "mask": "###LLL",
+          "weight": 0.5,
+          "example": "123BCD",
+          "skip": [
+            "A",
+            "E",
+            "I",
+            "O",
+            "U"
+          ]
+        }
+      ]
+    },
+    {
+      "code": "TX",
+      "name": "Texas",
+      "neighbors": [
+        "AR",
+        "LA",
+        "NM",
+        "OK"
+      ],
+      "bbox": [
+        25.84,
+        -106.65,
+        36.5,
+        -93.51
+      ],
+      "series": [
+        {
+          "id": "tx-pass",
+          "label": "Passenger",
+          "kind": "passenger",
+          "status": "current",
+          "issued": "2012-present",
+          "mask": "LLL####",
+          "weight": 1.0,
+          "example": "BCD1234",
+          "skip": [
+            "A",
+            "E",
+            "I",
+            "O",
+            "Q",
+            "U"
+          ]
+        },
+        {
+          "id": "tx-old-2009",
+          "label": "Passenger 2009-2012",
+          "kind": "passenger",
+          "status": "still_valid",
+          "issued": "2009-2012",
+          "mask": "LL#L###",
+          "weight": 1.0,
+          "example": "BC1D234",
+          "skip": [
+            "A",
+            "E",
+            "I",
+            "O",
+            "Q",
+            "U"
+          ]
+        },
+        {
+          "id": "tx-old-abc",
+          "label": "Passenger older",
+          "kind": "passenger",
+          "status": "still_valid",
+          "issued": "",
+          "mask": "LLL###",
+          "weight": 0.5,
+          "example": "BCD123",
+          "skip": [
+            "A",
+            "E",
+            "I",
+            "O",
+            "Q",
+            "U"
+          ]
+        },
+        {
+          "id": "tx-old-123abc",
+          "label": "Passenger older",
+          "kind": "passenger",
+          "status": "still_valid",
+          "issued": "",
+          "mask": "###LLL",
+          "weight": 0.45,
+          "example": "123BCD",
+          "skip": [
+            "A",
+            "E",
+            "I",
+            "O",
+            "Q",
+            "U"
+          ]
+        }
+      ]
+    },
+    {
+      "code": "UT",
+      "name": "Utah",
+      "neighbors": [
+        "AZ",
+        "CO",
+        "ID",
+        "NV",
+        "NM",
+        "WY"
+      ],
+      "bbox": [
+        36.99,
+        -114.05,
+        42.0,
+        -109.04
+      ],
+      "series": [
+        {
+          "id": "ut-pass",
+          "label": "Passenger Life Elevated",
+          "kind": "passenger",
+          "status": "current",
+          "issued": "2007-present",
+          "mask": "L###LL",
+          "weight": 1.0,
+          "example": "A123BC",
+          "skip": [
+            "I",
+            "O",
+            "Q"
+          ]
+        },
+        {
+          "id": "ut-igwt",
+          "label": "In God We Trust",
+          "kind": "specialty",
+          "status": "current",
+          "issued": "2023-present",
+          "mask": "#LLL#",
+          "weight": 0.55,
+          "example": "1ABC2",
+          "skip": [
+            "I",
+            "O",
+            "Q"
+          ]
+        },
+        {
+          "id": "ut-igwt-old",
+          "label": "In God We Trust older",
+          "kind": "specialty",
+          "status": "still_valid",
+          "issued": "2018-2023",
+          "mask": "#L#LL",
+          "weight": 0.45,
+          "example": "1A2BC",
+          "skip": [
+            "I",
+            "O",
+            "Q"
+          ]
+        },
+        {
+          "id": "ut-old-123abc",
+          "label": "Passenger 1985-2008",
+          "kind": "passenger",
+          "status": "still_valid",
+          "issued": "1985-2008",
+          "mask": "###LLL",
+          "weight": 0.55,
+          "example": "123ABC",
+          "skip": [
+            "I",
+            "O",
+            "Q"
+          ]
+        },
+        {
+          "id": "ut-old-abc123",
+          "label": "Passenger 1972-1985",
+          "kind": "passenger",
+          "status": "still_valid",
+          "issued": "1972-1985",
+          "mask": "LLL###",
+          "weight": 0.5,
+          "example": "ABC123",
+          "skip": [
+            "I",
+            "O",
+            "Q"
+          ]
+        }
+      ]
+    },
+    {
+      "code": "VT",
+      "name": "Vermont",
+      "neighbors": [
+        "MA",
+        "NH",
+        "NY"
+      ],
+      "bbox": [
+        42.73,
+        -73.44,
+        45.02,
+        -71.46
+      ],
+      "series": [
+        {
+          "id": "vt-pass",
+          "label": "Passenger",
+          "kind": "passenger",
+          "status": "current",
+          "issued": "1990-present",
+          "mask": "LLL###",
+          "weight": 1.0,
+          "example": "ABC123",
+          "skip": [
+            "I",
+            "O",
+            "Q",
+            "U",
+            "J"
+          ]
+        }
+      ]
+    },
+    {
+      "code": "VA",
+      "name": "Virginia",
+      "neighbors": [
+        "DC",
+        "KY",
+        "MD",
+        "NC",
+        "TN",
+        "WV"
+      ],
+      "bbox": [
+        36.54,
+        -83.68,
+        39.47,
+        -75.24
+      ],
+      "series": [
+        {
+          "id": "va-pass",
+          "label": "Passenger",
+          "kind": "passenger",
+          "status": "current",
+          "issued": "1994-present",
+          "mask": "LLL####",
+          "weight": 1.0,
+          "example": "ABC1234",
+          "skip": [
+            "I",
+            "O",
+            "Q"
+          ]
+        },
+        {
+          "id": "va-old",
+          "label": "Passenger 1979-1993",
+          "kind": "passenger",
+          "status": "still_valid",
+          "issued": "1979-1993",
+          "mask": "LLL###",
+          "weight": 0.55,
+          "example": "ABC123",
+          "skip": [
+            "I",
+            "O",
+            "Q"
+          ]
+        }
+      ]
+    },
+    {
+      "code": "WA",
+      "name": "Washington",
+      "neighbors": [
+        "ID",
+        "OR"
+      ],
+      "bbox": [
+        45.54,
+        -124.85,
+        49.0,
+        -116.92
+      ],
+      "series": [
+        {
+          "id": "wa-pass",
+          "label": "Passenger",
+          "kind": "passenger",
+          "status": "current",
+          "issued": "2010-present",
+          "mask": "LLL####",
+          "weight": 1.0,
+          "example": "ABC1234",
+          "skipAt": {
+            "2": [
+              "I",
+              "O",
+              "Q"
+            ]
+          }
+        },
+        {
+          "id": "wa-old",
+          "label": "Passenger 1987-2010",
+          "kind": "passenger",
+          "status": "still_valid",
+          "issued": "1987-2010",
+          "mask": "###LLL",
+          "weight": 1.0,
+          "example": "123ABC",
+          "skip": [
+            "I",
+            "O",
+            "Q"
+          ]
+        }
+      ]
+    },
+    {
+      "code": "WV",
+      "name": "West Virginia",
+      "neighbors": [
+        "KY",
+        "MD",
+        "OH",
+        "PA",
+        "VA"
+      ],
+      "bbox": [
+        37.2,
+        -82.64,
+        40.64,
+        -77.72
+      ],
+      "series": [
+        {
+          "id": "wv-pass-a",
+          "label": "Passenger month-coded",
+          "kind": "passenger",
+          "status": "current",
+          "issued": "2023-present",
+          "mask": null,
+          "weight": 0.8,
+          "example": "11A2345",
+          "regex": "^[1-9OND][0-9][A-Z][0-9]{4}$"
+        },
+        {
+          "id": "wv-pass-b",
+          "label": "Passenger month-coded letters",
+          "kind": "passenger",
+          "status": "current",
+          "issued": "2023-present",
+          "mask": null,
+          "weight": 0.8,
+          "example": "1AB1234",
+          "regex": "^[1-9OND][A-Z]{2}[0-9]{4}$"
+        },
+        {
+          "id": "wv-old",
+          "label": "Passenger 2002-2023",
+          "kind": "passenger",
+          "status": "still_valid",
+          "issued": "2002-2023",
+          "mask": null,
+          "weight": 0.5,
+          "example": "1AB123",
+          "regex": "^[1-9OND][A-Z]{2}[0-9]{3}$"
+        }
+      ]
+    },
+    {
+      "code": "WI",
+      "name": "Wisconsin",
+      "neighbors": [
+        "IL",
+        "IA",
+        "MI",
+        "MN"
+      ],
+      "bbox": [
+        42.49,
+        -92.89,
+        47.31,
+        -86.25
+      ],
+      "series": [
+        {
+          "id": "wi-pass",
+          "label": "Passenger",
+          "kind": "passenger",
+          "status": "current",
+          "issued": "2017-present",
+          "mask": "LLL####",
+          "weight": 1.0,
+          "example": "ABC1234",
+          "skip": [
+            "I",
+            "O",
+            "Q"
+          ]
+        },
+        {
+          "id": "wi-old",
+          "label": "Passenger 2000-2017",
+          "kind": "passenger",
+          "status": "still_valid",
+          "issued": "2000-2017",
+          "mask": "###LLL",
+          "weight": 1.0,
+          "example": "123ABC",
+          "skip": [
+            "I",
+            "O",
+            "Q"
+          ]
+        },
+        {
+          "id": "wi-older",
+          "label": "Passenger older",
+          "kind": "passenger",
+          "status": "still_valid",
+          "issued": "",
+          "mask": "LLL###",
+          "weight": 0.45,
+          "example": "ABC123",
+          "skip": [
+            "I",
+            "O",
+            "Q"
+          ]
+        }
+      ]
+    },
+    {
+      "code": "WY",
+      "name": "Wyoming",
+      "neighbors": [
+        "CO",
+        "ID",
+        "MT",
+        "NE",
+        "SD",
+        "UT"
+      ],
+      "bbox": [
+        40.99,
+        -111.06,
+        45.01,
+        -104.05
+      ],
+      "series": [
+        {
+          "id": "wy-pass",
+          "label": "Passenger county-coded",
+          "kind": "passenger",
+          "status": "current",
+          "issued": "2024-present",
+          "mask": null,
+          "weight": 0.65,
+          "example": "1A123A",
+          "regex": "^[0-9]{1,2}[A-Z][0-9]{3,4}[A-Z]?$"
+        }
+      ]
+    },
+    {
+      "code": "AS",
+      "name": "American Samoa",
+      "neighbors": [],
+      "bbox": [
+        -14.55,
+        -171.09,
+        -14.16,
+        -169.42
+      ],
+      "series": [
+        {
+          "id": "as-pass",
+          "label": "Passenger",
+          "kind": "passenger",
+          "status": "current",
+          "issued": "2011-present",
+          "mask": "####",
+          "weight": 0.4,
+          "example": "1234"
+        }
+      ]
+    },
+    {
+      "code": "GU",
+      "name": "Guam",
+      "neighbors": [],
+      "bbox": [
+        13.23,
+        144.62,
+        13.65,
+        144.96
+      ],
+      "series": [
+        {
+          "id": "gu-pass",
+          "label": "Passenger village-coded",
+          "kind": "passenger",
+          "status": "current",
+          "issued": "2009-present",
+          "mask": "LL####",
+          "weight": 1.0,
+          "example": "AB1234"
+        },
+        {
+          "id": "gu-old",
+          "label": "Passenger older",
+          "kind": "passenger",
+          "status": "still_valid",
+          "issued": "",
+          "mask": "LLL####",
+          "weight": 0.45,
+          "example": "ABC1234"
+        }
+      ]
+    },
+    {
+      "code": "MP",
+      "name": "Northern Mariana Islands",
+      "neighbors": [],
+      "bbox": [
+        14.11,
+        144.89,
+        20.55,
+        146.06
+      ],
+      "series": [
+        {
+          "id": "mp-pass",
+          "label": "Passenger",
+          "kind": "passenger",
+          "status": "current",
+          "issued": "1989-present",
+          "mask": "LLL###",
+          "weight": 1.0,
+          "example": "ABC123"
+        }
+      ]
+    },
+    {
+      "code": "PR",
+      "name": "Puerto Rico",
+      "neighbors": [],
+      "bbox": [
+        17.88,
+        -67.95,
+        18.52,
+        -65.22
+      ],
+      "series": [
+        {
+          "id": "pr-pass",
+          "label": "Passenger",
+          "kind": "passenger",
+          "status": "current",
+          "issued": "2023-present",
+          "mask": "LLL###",
+          "weight": 1.0,
+          "example": "ABC123"
+        }
+      ]
+    },
+    {
+      "code": "VI",
+      "name": "U.S. Virgin Islands",
+      "neighbors": [],
+      "bbox": [
+        17.67,
+        -65.09,
+        18.41,
+        -64.56
+      ],
+      "series": [
+        {
+          "id": "vi-pass",
+          "label": "Passenger island-coded",
+          "kind": "passenger",
+          "status": "current",
+          "issued": "2023-present",
+          "mask": "LLL###",
+          "weight": 1.0,
+          "example": "ABC123"
+        }
+      ]
+    }
+  ]
+}

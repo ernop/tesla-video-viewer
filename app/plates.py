@@ -12,18 +12,20 @@ from pathlib import Path
 from typing import Callable
 
 from app.index_store import ClipIndex
+from app.location import map_url
 from app.media import MediaError, extract_jpeg_sequence
-from app.scan import Event, camera_label
+from app.plate_region import classify_plate
+from app.scan import Event, Library, camera_label
 
 LOGGER = logging.getLogger("tesla-video-viewer.plates")
 
 DETECTOR_MODEL = "yolo-v9-s-608-license-plate-end2end"
 OCR_MODEL = "cct-s-v2-global-model"
-SAMPLE_FPS = 0.5
+SAMPLE_FPS = 1.0
 MIN_PLATE_WIDTH = 40
 MIN_OCR_CONF = 0.35
 MIN_TEXT_LEN = 4
-PREFERRED_CAMERAS = ("front", "back", "left_repeater", "right_repeater")
+PREFERRED_CAMERAS = ("front",)
 
 
 class PlateError(RuntimeError):
@@ -98,6 +100,7 @@ def configure_plates(store: ClipIndex) -> None:
     _crop_root = store.path.parent / "plate-crops"
     _crop_root.mkdir(parents=True, exist_ok=True)
     store.reset_incomplete_plate_scans()
+    store.reclassify_unclassified_plates()
 
 
 def reset_for_tests() -> None:
@@ -119,9 +122,83 @@ def crop_path(crop_id: str) -> Path:
     return _crop_root / f"{safe}.jpg"
 
 
+def catalog_payload() -> dict[str, object]:
+    if _store is None:
+        return {"plates": [], "total": 0, "classified": 0, "unclassified": 0}
+    plates = _store.list_plates()
+    classified = sum(1 for item in plates if item.get("jurisdiction"))
+    return {
+        "plates": plates,
+        "total": len(plates),
+        "classified": classified,
+        "unclassified": len(plates) - classified,
+    }
+
+
+def still_path(crop_id: str) -> Path:
+    safe = "".join(ch for ch in crop_id if ch.isalnum())
+    return _crop_root / f"{safe}-still.png"
+
+
+def frame_path(crop_id: str) -> Path:
+    safe = "".join(ch for ch in crop_id if ch.isalnum())
+    return _crop_root / f"{safe}-frame.png"
+
+
+def vehicle_path(crop_id: str) -> Path:
+    safe = "".join(ch for ch in crop_id if ch.isalnum())
+    return _crop_root / f"{safe}-vehicle.png"
+
+
+def vehicle_crop_box(
+    bbox: dict[str, object],
+    frame_w: int,
+    frame_h: int,
+    *,
+    scale: float = 10.0,
+    upward: float = 0.28,
+) -> tuple[int, int, int, int]:
+    """Square crop around a plate, shifted up so more of the car is in view."""
+    x1 = int(bbox["x1"])
+    y1 = int(bbox["y1"])
+    x2 = int(bbox["x2"])
+    y2 = int(bbox["y2"])
+    plate_w = max(1, x2 - x1)
+    plate_h = max(1, y2 - y1)
+    cx = (x1 + x2) / 2.0
+    cy = (y1 + y2) / 2.0
+    side = max(plate_w * scale, plate_h * scale * 1.15, 240.0)
+    side = min(side, float(min(frame_w, frame_h)))
+    cy -= upward * side
+    left = int(round(cx - side / 2.0))
+    top = int(round(cy - side / 2.0))
+    size = int(round(side))
+    if left < 0:
+        left = 0
+    if top < 0:
+        top = 0
+    if left + size > frame_w:
+        left = max(0, frame_w - size)
+    if top + size > frame_h:
+        top = max(0, frame_h - size)
+    right = min(frame_w, left + size)
+    bottom = min(frame_h, top + size)
+    return left, top, right, bottom
+
+
+def find_hit(event_id: str, crop_id: str) -> dict[str, object] | None:
+    status = status_for(event_id)
+    for plate in status.get("plates") or []:
+        if not isinstance(plate, dict):
+            continue
+        for hit in plate.get("hits") or []:
+            if isinstance(hit, dict) and str(hit.get("cropId") or "") == crop_id:
+                return hit
+    return None
+
+
 def cameras_for_plates(names: list[str]) -> list[str]:
-    preferred = [name for name in PREFERRED_CAMERAS if name in names]
-    return preferred or list(names)
+    return [name for name in PREFERRED_CAMERAS if name in names]
 
 
 def normalize_plate(text: str) -> str:
@@ -136,13 +213,32 @@ def mean_confidence(value: float | list[float] | None) -> float:
     return float(value)
 
 
-def group_hits(hits: list[dict[str, object]]) -> list[dict[str, object]]:
+def _hits_latlon(hits: list[dict[str, object]]) -> tuple[float | None, float | None]:
+    for hit in hits:
+        lat = hit.get("latitude")
+        lon = hit.get("longitude")
+        if isinstance(lat, (int, float)) and isinstance(lon, (int, float)):
+            return float(lat), float(lon)
+    return None, None
+
+
+def group_hits(
+    hits: list[dict[str, object]],
+    lat: float | None = None,
+    lon: float | None = None,
+) -> list[dict[str, object]]:
     buckets: dict[str, list[dict[str, object]]] = {}
     for hit in hits:
         text = str(hit.get("text") or "")
         if not text:
             continue
         buckets.setdefault(text, []).append(hit)
+    if lat is None or lon is None:
+        found_lat, found_lon = _hits_latlon(hits)
+        if lat is None:
+            lat = found_lat
+        if lon is None:
+            lon = found_lon
     plates: list[dict[str, object]] = []
     for text, items in buckets.items():
         items.sort(key=lambda item: float(item["elapsedSec"]))
@@ -159,6 +255,7 @@ def group_hits(hits: list[dict[str, object]]) -> list[dict[str, object]]:
                 "cameraLabel": items[0]["cameraLabel"],
                 "cropId": best["cropId"],
                 "hits": items,
+                "jurisdiction": classify_plate(text, lat=lat, lon=lon),
             }
         )
     plates.sort(key=lambda item: (-int(item["count"]), float(item["firstElapsedSec"])))
@@ -183,6 +280,7 @@ def hit_from_appearance(row: dict[str, object]) -> dict[str, object]:
     return {
         "id": row.get("id") or row.get("crop_id"),
         "cropId": row.get("crop_id") or row.get("id"),
+        "eventId": row.get("event_id"),
         "text": row["plate_text"],
         "rawText": row["plate_text"],
         "region": row.get("region"),
@@ -261,14 +359,12 @@ def payload_from_store(event_id: str) -> dict[str, object] | None:
 
 
 def queued_payload(event_id: str, position: int) -> dict[str, object]:
-    saved = payload_from_store(event_id)
-    plates = [] if saved is None else saved["plates"]
     return {
         "state": "queued",
         "eventId": event_id,
         "framesDone": 0,
         "framesTotal": 0,
-        "plates": plates,
+        "plates": [],
         "error": None,
         "message": f"Queued behind {position} scan{'s' if position != 1 else ''}.",
         "detector": DETECTOR_MODEL,
@@ -279,6 +375,168 @@ def queued_payload(event_id: str, position: int) -> dict[str, object]:
         "etaSec": None,
         "queued": True,
         "queuePosition": position,
+    }
+
+
+def _clock_from_iso(value: str) -> str:
+    if "T" in value:
+        return value.split("T", 1)[1][:5]
+    return ""
+
+
+def _clip_ref(
+    library: Library | None,
+    event_id: str,
+    camera: str,
+    elapsed: float,
+) -> dict[str, object] | None:
+    if library is None:
+        return None
+    event = library.events.get(event_id)
+    if event is None:
+        return None
+    resolved = event.segment_for(camera, elapsed)
+    if resolved is None:
+        return None
+    segment, local = resolved
+    return {
+        "camera": camera,
+        "cameraLabel": camera_label(camera),
+        "segmentIndex": segment.index,
+        "localSec": round(float(local), 3),
+        "elapsedSec": elapsed,
+        "videoUrl": f"/api/events/{event_id}/cameras/{camera}/segments/{segment.index}",
+    }
+
+
+def plate_dossier(text: str, library: Library | None) -> dict[str, object] | None:
+    if _store is None:
+        return None
+    key = normalize_plate(text)
+    if not key:
+        return None
+    rows = _store.list_appearances_for_plate(key)
+    if not rows:
+        return None
+    hits = [hit_from_appearance(row) for row in rows]
+    groups: dict[str, list[dict[str, object]]] = {}
+    for hit in hits:
+        groups.setdefault(str(hit.get("eventId") or ""), []).append(hit)
+    events_out: list[dict[str, object]] = []
+    for eid, group in groups.items():
+        if not eid:
+            continue
+        group.sort(key=lambda item: (float(item["elapsedSec"]), str(item["camera"])))
+        first = group[0]
+        last = group[-1]
+        event = None if library is None else library.events.get(eid)
+        lat = first.get("latitude")
+        lon = first.get("longitude")
+        city = first.get("city")
+        street = first.get("street")
+        if event is not None:
+            if event.latitude is not None:
+                lat = event.latitude
+            if event.longitude is not None:
+                lon = event.longitude
+            if event.city:
+                city = event.city
+            if event.street:
+                street = event.street
+        lat_f = float(lat) if isinstance(lat, (int, float)) else None
+        lon_f = float(lon) if isinstance(lon, (int, float)) else None
+        start_iso = None if event is None else event.start.isoformat(timespec="seconds")
+        time_iso = str(first.get("time") or start_iso or "")
+        clock = _clock_from_iso(time_iso) or (event.start.strftime("%H:%M") if event else "")
+        best = max(group, key=lambda item: float(item.get("ocrConfidence") or 0))
+        events_out.append(
+            {
+                "eventId": eid,
+                "available": event is not None,
+                "kind": None if event is None else event.kind,
+                "date": first.get("day") or (event.start.strftime("%Y-%m-%d") if event else None),
+                "start": start_iso,
+                "time": time_iso or None,
+                "clock": clock,
+                "city": city,
+                "street": street,
+                "latitude": lat_f,
+                "longitude": lon_f,
+                "mapUrl": map_url(lat_f, lon_f) if lat_f is not None and lon_f is not None else None,
+                "sourceLabel": None if event is None else event.source_label,
+                "firstElapsedSec": float(first["elapsedSec"]),
+                "lastElapsedSec": float(last["elapsedSec"]),
+                "hitCount": len(group),
+                "camera": first["camera"],
+                "cameraLabel": first["cameraLabel"],
+                "cropId": best.get("cropId"),
+                "clip": _clip_ref(library, eid, str(first["camera"]), float(first["elapsedSec"])),
+                "hits": [
+                    {
+                        "elapsedSec": float(item["elapsedSec"]),
+                        "time": item.get("time"),
+                        "clock": _clock_from_iso(str(item.get("time") or "")),
+                        "camera": item["camera"],
+                        "cameraLabel": item["cameraLabel"],
+                        "cropId": item.get("cropId"),
+                        "latitude": item.get("latitude"),
+                        "longitude": item.get("longitude"),
+                    }
+                    for item in group
+                ],
+            }
+        )
+    events_out.sort(
+        key=lambda item: (str(item.get("date") or ""), str(item.get("clock") or ""), str(item["eventId"]))
+    )
+    clusters: dict[tuple[float, float], dict[str, object]] = {}
+    for item in events_out:
+        if item["latitude"] is None or item["longitude"] is None:
+            continue
+        cluster_key = (round(float(item["latitude"]), 4), round(float(item["longitude"]), 4))
+        cluster = clusters.get(cluster_key)
+        if cluster is None:
+            cluster = {
+                "latitude": float(item["latitude"]),
+                "longitude": float(item["longitude"]),
+                "city": item.get("city"),
+                "street": item.get("street"),
+                "mapUrl": item.get("mapUrl"),
+                "sightings": [],
+            }
+            clusters[cluster_key] = cluster
+        sightings = cluster["sightings"]
+        if isinstance(sightings, list):
+            sightings.append(
+                {
+                    "day": item.get("date"),
+                    "time": item.get("time"),
+                    "clock": item.get("clock"),
+                    "eventId": item["eventId"],
+                    "city": item.get("city"),
+                    "street": item.get("street"),
+                }
+            )
+    best_hit = max(hits, key=lambda item: float(item.get("ocrConfidence") or 0))
+    lat, lon = _hits_latlon(hits)
+    times = [str(hit.get("time") or "") for hit in hits if hit.get("time")]
+    places: list[str] = []
+    for item in events_out:
+        label = ", ".join(part for part in [item.get("city"), item.get("street")] if part)
+        if label and label not in places:
+            places.append(label)
+    return {
+        "text": key,
+        "region": best_hit.get("region"),
+        "jurisdiction": classify_plate(key, lat=lat, lon=lon),
+        "cropId": best_hit.get("cropId"),
+        "appearanceCount": len(hits),
+        "eventCount": len(events_out),
+        "firstSeen": min(times) if times else None,
+        "lastSeen": max(times) if times else None,
+        "places": places,
+        "events": events_out,
+        "points": list(clusters.values()),
     }
 
 
@@ -322,19 +580,26 @@ def load_engine():
 
 
 def _is_running() -> bool:
-    if _guard.locked():
-        return True
-    return _thread is not None and _thread.is_alive()
+    return _guard.locked()
 
 
 def status_for(event_id: str) -> dict[str, object]:
+    queued_pos = None
+    cached = None
+    live = None
     with _lock:
         if _progress.event_id == event_id and _progress.state in {"loading", "running", "error", "complete"}:
-            return _progress.to_json()
-        for index, queued in enumerate(_queue):
-            if queued.id == event_id:
-                return queued_payload(event_id, index + 1)
-        cached = _cache.get(event_id)
+            live = _progress.to_json()
+        else:
+            for index, queued in enumerate(_queue):
+                if queued.id == event_id:
+                    queued_pos = index + 1
+                    break
+            cached = _cache.get(event_id)
+    if live is not None:
+        return live
+    if queued_pos is not None:
+        return queued_payload(event_id, queued_pos)
     saved = payload_from_store(event_id)
     if saved is not None:
         return saved
@@ -345,6 +610,13 @@ def status_for(event_id: str) -> dict[str, object]:
 
 def start_plate_scan(event: Event, *, force: bool = False, blocking: bool = False) -> dict[str, object]:
     global _thread
+    if not force:
+        saved = payload_from_store(event.id)
+        if saved is not None:
+            with _lock:
+                if _is_running() and _progress.event_id == event.id:
+                    return _progress.to_json()
+            return saved
     with _lock:
         if _is_running():
             if _progress.event_id == event.id and not force:
@@ -352,16 +624,13 @@ def start_plate_scan(event: Event, *, force: bool = False, blocking: bool = Fals
             if force:
                 raise PlateBusy("A plate scan is already running.")
             if any(item.id == event.id for item in _queue):
-                return queued_payload(event.id, next(i for i, item in enumerate(_queue) if item.id == event.id) + 1)
+                position = next(i for i, item in enumerate(_queue) if item.id == event.id) + 1
+                return queued_payload(event.id, position)
             _queue.append(event)
             return queued_payload(event.id, len(_queue))
-        if not force:
-            saved = payload_from_store(event.id)
-            if saved is not None:
-                return saved
-            cached = _cache.get(event.id)
-            if cached is not None:
-                return cached
+        cached = _cache.get(event.id)
+        if cached is not None and not force:
+            return cached
         _progress.state = "loading"
         _progress.event_id = event.id
         _progress.frames_done = 0
@@ -414,8 +683,18 @@ def scan_event(event: Event, progress: PlateProgress, engine_factory: Callable |
     try:
         progress.state = "loading"
         progress.message = "Loading plate models…"
-        engine = factory()
         cameras = cameras_for_plates(event.camera_names())
+        if not cameras:
+            progress.state = "complete"
+            progress.complete = True
+            progress.message = "No front camera in this event."
+            persist_scan(event, progress)
+            snapshot = progress.to_json()
+            with _lock:
+                if progress.event_id:
+                    _cache[progress.event_id] = snapshot
+            return
+        engine = factory()
         estimate = 0
         for camera in cameras:
             track = event.cameras.get(camera)
@@ -447,7 +726,7 @@ def scan_event(event: Event, progress: PlateProgress, engine_factory: Callable |
                         if hit_list:
                             hits.extend(hit_list)
                             progress.hits = hits
-                            progress.plates = group_hits(hits)
+                            progress.plates = group_hits(hits, lat=event.latitude, lon=event.longitude)
                         done += 1
                         progress.frames_done = done
                         if done > progress.frames_total:
@@ -455,7 +734,7 @@ def scan_event(event: Event, progress: PlateProgress, engine_factory: Callable |
                         if frame_path.exists():
                             frame_path.unlink()
         progress.hits = hits
-        progress.plates = group_hits(hits)
+        progress.plates = group_hits(hits, lat=event.latitude, lon=event.longitude)
         progress.frames_done = done
         progress.frames_total = max(progress.frames_total, done)
         progress.state = "complete"
@@ -463,6 +742,10 @@ def scan_event(event: Event, progress: PlateProgress, engine_factory: Callable |
         count = len(progress.plates)
         progress.message = f"Found {count} plate{'s' if count != 1 else ''}."
         persist_scan(event, progress)
+        saved = payload_from_store(event.id)
+        if saved is not None:
+            progress.plates = saved["plates"]
+            progress.message = str(saved["message"])
         snapshot = progress.to_json()
         with _lock:
             if progress.event_id:

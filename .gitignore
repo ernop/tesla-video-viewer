@@ -7,6 +7,7 @@ config.json
 clip-index.sqlite3
 clip-index.sqlite3-wal
 clip-index.sqlite3-shm
+plate-crops/
 screenshots/
 clips/
 *.mp4

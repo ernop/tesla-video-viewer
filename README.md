@@ -72,8 +72,11 @@ removes missing files after it finishes a source folder.
    writes every camera at the current time.
 6. PNGs land in `output_dir/<event-start>/`. Names include the frame time
    and camera.
-7. **Find plates** runs FastALPR on front, rear, and repeater cameras.
-   Click a plate to jump to that time.
+7. Opening a clip queues a FastALPR scan of the front camera at 1 fps
+   if that event is not stored yet. Iridescent boxes mark plates on the
+   video. Click a plate to open it. Marks on the scrubber show each hit.
+   Prev/Next steps through those times. Results live in `plates` and
+   `plate_appearances` in `clip-index.sqlite3`.
 
 Keyboard in the viewer:
 

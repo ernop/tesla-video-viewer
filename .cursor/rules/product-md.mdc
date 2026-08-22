@@ -1,0 +1,12 @@
+---
+description: Keep product.md as the design record for this project
+alwaysApply: true
+---
+
+# product.md is the design record
+
+`product.md` holds goals, intentions, product surface, runtime constraints, and decisions (including rejected approaches). A change is not finished until `product.md` matches it.
+
+When you add, change, or drop a feature, or learn something that would change a future design choice, write it into `product.md` in the same turn. Include the why. If a path was tested and rejected, record the result so it is not proposed again as if it were unknown.
+
+Do not put local paths, secrets, or clip contents in `product.md`. Runtime how-to stays in `README.md`. Design and intent stay in `product.md`.

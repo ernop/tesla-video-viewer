@@ -65,7 +65,7 @@ button.dump-all {
 
 .top {
   display: grid;
-  grid-template-columns: 1fr auto auto;
+  grid-template-columns: 1fr auto auto auto;
   gap: 1rem 1.5rem;
   align-items: end;
   padding: 1rem 1.25rem 0.85rem;
@@ -244,13 +244,25 @@ button.dump-all {
   line-height: 1.2;
 }
 
+.day-view {
+  min-height: calc(100vh - 5rem);
+}
+
+.day-bar {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 1rem;
+  align-items: center;
+  padding: 0.85rem 1.25rem 0.5rem;
+}
+
+.day-heading h2 {
+  margin: 0;
+}
+
 .day-panel {
   padding: 0 1.25rem 2rem;
   max-width: 64rem;
-}
-
-.day-panel-head h2 {
-  margin: 0;
 }
 
 .day-meta {
@@ -494,6 +506,54 @@ button.dump-all {
   border-color: var(--amber);
 }
 
+.plate-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+}
+
+.plate-glow {
+  position: absolute;
+  box-sizing: border-box;
+  border: 3px solid #9ffff4;
+  border-radius: 2px;
+  box-shadow:
+    0 0 6px #7af6ff,
+    0 0 14px #e56bff,
+    0 0 22px #ffe27a99,
+    inset 0 0 10px #9ffff455;
+  animation: plate-iri 2.4s linear infinite;
+}
+
+.plate-glow.selected {
+  border-width: 4px;
+  border-color: var(--amber);
+  box-shadow:
+    0 0 8px #9ffff4,
+    0 0 18px #e56bff,
+    0 0 28px #ffe27acc,
+    inset 0 0 12px #9ffff466;
+}
+
+.plate-glow span {
+  position: absolute;
+  left: -3px;
+  top: -1.2rem;
+  padding: 0.05rem 0.28rem;
+  background: #16130ccc;
+  font: 700 0.72rem/1.2 ui-monospace, "Cascadia Mono", monospace;
+  letter-spacing: 0.08em;
+  color: #f8fbff;
+  text-shadow: 0 0 6px #79fff6, 0 0 12px #d47bff;
+  white-space: nowrap;
+}
+
+@keyframes plate-iri {
+  from { filter: hue-rotate(0deg) saturate(1.35); }
+  to { filter: hue-rotate(360deg) saturate(1.35); }
+}
+
 .transport, .dump-bar, .plate-bar {
   display: flex;
   flex-wrap: wrap;
@@ -524,7 +584,7 @@ button.dump-all {
   gap: 0.5rem;
 }
 
-.plate-list button {
+.plate-list .plate-card {
   display: grid;
   grid-template-columns: 5.5rem 1fr;
   gap: 0.55rem;
@@ -532,6 +592,14 @@ button.dump-all {
   text-align: left;
   align-items: center;
   padding: 0.35rem;
+  border: 1px solid var(--line);
+  background: var(--bg-raise);
+  cursor: pointer;
+}
+
+.plate-list .plate-card.plate-open {
+  border-color: var(--amber);
+  background: #2a2418;
 }
 
 .plate-list img {
@@ -547,6 +615,22 @@ button.dump-all {
   font-size: 1.05rem;
   letter-spacing: 0.08em;
   color: var(--ink);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 0.18em;
+  text-decoration-color: var(--line);
+}
+
+.plate-list .plate-text:hover {
+  color: var(--amber);
+  text-decoration-color: var(--amber);
+}
+
+.plate-list .plate-state {
+  margin-left: 0.35rem;
+  letter-spacing: 0.04em;
+  font-size: 0.78rem;
+  color: var(--amber);
 }
 
 .plate-list .plate-meta {
@@ -555,12 +639,473 @@ button.dump-all {
   font-size: 0.78rem;
 }
 
+.plate-step {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  align-items: center;
+  margin-top: 0.35rem;
+}
+
+.plate-step button {
+  display: inline-block;
+  width: auto;
+  padding: 0.2rem 0.45rem;
+  font-size: 0.78rem;
+}
+
+.plate-zoom {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: flex-start;
+  width: 100%;
+  margin-top: 0.2rem;
+  padding-top: 0.7rem;
+  border-top: 1px solid var(--line);
+}
+
+.plate-zoom[hidden] {
+  display: none;
+}
+
+.plate-zoom-label {
+  margin: 0;
+  font-family: ui-monospace, "Cascadia Mono", monospace;
+  font-size: 1.05rem;
+  letter-spacing: 0.08em;
+}
+
+.plate-zoom-size {
+  margin: 0.25rem 0 0.45rem;
+  color: var(--tan);
+  font-size: 0.78rem;
+}
+
+.plate-zoom-scale {
+  display: flex;
+  gap: 0.35rem;
+}
+
+.plate-zoom-scale button {
+  padding: 0.2rem 0.5rem;
+}
+
+.plate-zoom-scale button[aria-pressed="true"] {
+  background: var(--amber);
+  color: #16130c;
+}
+
+.plate-zoom-frame {
+  background: #000;
+  border: 1px solid var(--amber);
+  overflow: auto;
+  max-width: 100%;
+  max-height: 18rem;
+  padding: 0.6rem;
+}
+
+.plate-zoom-shots {
+  display: grid;
+  grid-template-columns: minmax(12rem, 18rem) minmax(12rem, 18rem) minmax(16rem, 1fr);
+  gap: 0.7rem;
+  width: 100%;
+  align-items: start;
+}
+
+.plate-zoom-shot {
+  margin: 0;
+  min-width: 0;
+}
+
+.plate-zoom-shot figcaption {
+  margin: 0 0 0.35rem;
+  color: var(--tan);
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.plate-zoom-open {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 1px solid var(--line);
+  background: #000;
+  cursor: zoom-in;
+}
+
+.plate-zoom-open img {
+  display: block;
+  width: 100%;
+  height: 16rem;
+  object-fit: contain;
+  background: #000;
+}
+
+.plate-zoom-frame img {
+  display: block;
+  max-width: none;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+.plate-shot-dialog {
+  background: var(--bg-raise);
+  color: var(--ink);
+  border: 1px solid var(--amber);
+  padding: 0.8rem;
+  width: min(96vw, 72rem);
+  max-height: 92vh;
+}
+
+.plate-shot-dialog::backdrop {
+  background: rgb(0 0 0 / 0.72);
+}
+
+.plate-shot-caption {
+  margin: 0 0 0.5rem;
+}
+
+.plate-shot-dialog img {
+  display: block;
+  max-width: 100%;
+  max-height: 78vh;
+  margin: 0 auto 0.7rem;
+  background: #000;
+}
+
+.plate-shot-dialog button {
+  display: block;
+}
+
+@media (max-width: 900px) {
+  .plate-zoom-shots {
+    grid-template-columns: 1fr;
+  }
+}
+
 .scrub-wrap {
   flex: 1;
   min-width: 12rem;
 }
 
+.scrub-track {
+  position: relative;
+}
+
+.plate-marks {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -0.35rem;
+  height: calc(100% + 0.7rem);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.plate-mark {
+  position: absolute;
+  top: 0;
+  width: 3px;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  transform: translateX(-50%);
+  pointer-events: auto;
+  opacity: 0.4;
+  background: var(--tan);
+}
+
+.plate-mark.active {
+  opacity: 1;
+  width: 5px;
+  background: var(--amber);
+  z-index: 2;
+}
+
+.plates-view {
+  padding-bottom: 2rem;
+}
+
+.plates-bar {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 0.8rem 1rem;
+  align-items: center;
+  padding: 0.85rem 1.25rem 0.5rem;
+}
+
+.plates-raw {
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
+  color: var(--tan);
+  font-size: 0.9rem;
+}
+
+.plates-filters {
+  display: flex;
+  gap: 0.4rem;
+  padding: 0.2rem 1.25rem 0.7rem;
+}
+
+.plates-filters button[aria-pressed="true"] {
+  background: var(--amber);
+  color: #16130c;
+}
+
+.plates-detail {
+  margin: 0 1.25rem 0.9rem;
+  padding: 0.7rem;
+  border: 1px solid var(--amber);
+  background: var(--bg-raise);
+  display: grid;
+  grid-template-columns: minmax(12rem, 1fr) minmax(16rem, 1.4fr);
+  gap: 0.8rem;
+  align-items: start;
+}
+
+.plates-detail[hidden] {
+  display: none;
+}
+
+.plates-detail-text {
+  margin: 0;
+  font-family: ui-monospace, "Cascadia Mono", monospace;
+  font-size: 1.25rem;
+  letter-spacing: 0.08em;
+}
+
+.plates-detail-state {
+  margin: 0.25rem 0 0;
+  color: var(--amber);
+  font-size: 0.95rem;
+}
+
+.plates-detail-info {
+  margin: 0.35rem 0 0.6rem;
+  color: var(--tan);
+  font-size: 0.82rem;
+}
+
+.plates-detail-frame {
+  max-height: 16rem;
+}
+
+.plates-view.raw-pixels .plates-thumb,
+.plates-view.raw-pixels .plates-detail-frame img {
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+.plates-catalog {
+  list-style: none;
+  margin: 0;
+  padding: 0 1.25rem 2rem;
+  display: grid;
+  gap: 0.35rem;
+}
+
+.plates-catalog button.plate-row {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 6.2rem 8.5rem 5rem minmax(8rem, 1.3fr) auto auto minmax(7rem, 1fr);
+  gap: 0.55rem 0.7rem;
+  align-items: center;
+  text-align: left;
+  padding: 0.35rem 0.45rem;
+  border-color: var(--line);
+  color: inherit;
+}
+
+.plates-catalog button.plate-row:hover,
+.plates-catalog button.plate-row:focus-visible {
+  background: #2a2418;
+  color: inherit;
+}
+
+.plates-catalog button.plate-row.plate-open {
+  border-color: var(--amber);
+  background: #2a2418;
+}
+
+.plates-thumb {
+  width: 6.2rem;
+  height: 2.5rem;
+  object-fit: contain;
+  background: #000;
+}
+
+.plates-text {
+  font-family: ui-monospace, "Cascadia Mono", monospace;
+  letter-spacing: 0.06em;
+}
+
+.plates-state {
+  color: var(--amber);
+  font-size: 0.85rem;
+}
+
+.plates-state.unknown {
+  color: var(--tan);
+}
+
+.plates-series,
+.plates-hits,
+.plates-seen,
+.plates-place {
+  color: var(--tan);
+  font-size: 0.8rem;
+}
+
+.car-view {
+  min-height: calc(100vh - 5rem);
+}
+
+.car-bar {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 1rem;
+  align-items: center;
+  padding: 0.85rem 1.25rem 0.5rem;
+}
+
+.car-title-row {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.car-title-row h2 {
+  margin: 0;
+  font-family: ui-monospace, "Cascadia Mono", monospace;
+  letter-spacing: 0.08em;
+}
+
+.car-crop {
+  width: 7.5rem;
+  height: 2.8rem;
+  object-fit: contain;
+  background: #000;
+  border: 1px solid var(--line);
+}
+
+.car-meta {
+  margin: 0.25rem 0 0;
+  color: var(--tan);
+  font-size: 0.92rem;
+}
+
+.car-body {
+  padding: 0 1.25rem 2.5rem;
+  max-width: 72rem;
+}
+
+.car-map-wrap {
+  border: 1px solid var(--line);
+  background: #1a1814;
+  margin: 0 0 1.1rem;
+}
+
+.car-map {
+  height: 22rem;
+  width: 100%;
+}
+
+.car-map .leaflet-container {
+  background: #1a1814;
+  font: inherit;
+  height: 100%;
+}
+
+.car-map-empty,
+.car-map-fallback {
+  color: var(--tan);
+  margin: 0 0 1rem;
+}
+
+.car-map-fallback {
+  list-style: none;
+  padding: 0.8rem 1rem;
+}
+
+.car-map-fallback a,
+.car-sighting-place a {
+  color: var(--amber);
+}
+
+.car-map-popup p {
+  margin: 0 0 0.35rem;
+}
+
+.car-map-popup button {
+  margin-left: 0.35rem;
+  padding: 0.15rem 0.45rem;
+  font-size: 0.8rem;
+}
+
+.leaflet-tooltip {
+  background: #1c1a14;
+  color: var(--ink);
+  border: 1px solid var(--amber);
+}
+
+.car-sightings {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 1rem;
+}
+
+.car-sighting {
+  border: 1px solid var(--line);
+  background: var(--bg-raise);
+  padding: 0.7rem;
+}
+
+.car-sighting-head {
+  display: grid;
+  grid-template-columns: 7.5rem 1fr;
+  gap: 0.8rem;
+  align-items: start;
+}
+
+.car-sighting-head img {
+  width: 7.5rem;
+  height: 2.8rem;
+  object-fit: contain;
+  background: #000;
+}
+
+.car-sighting-when {
+  margin: 0;
+  font-family: ui-monospace, "Cascadia Mono", monospace;
+}
+
+.car-sighting-place,
+.car-sighting-hits {
+  margin: 0.25rem 0 0;
+  color: var(--tan);
+  font-size: 0.88rem;
+}
+
+.car-sighting video {
+  display: block;
+  width: 100%;
+  max-height: 18rem;
+  margin-top: 0.7rem;
+  background: #000;
+}
+
+.car-sighting button {
+  margin-top: 0.45rem;
+}
+
 .scrub-wrap input {
+  position: relative;
+  z-index: 3;
   width: 100%;
   accent-color: var(--amber);
 }
@@ -641,6 +1186,22 @@ button.dump-all {
 
   .day-events button {
     grid-template-columns: 1fr 1fr;
+  }
+
+  .plates-catalog button.plate-row {
+    grid-template-columns: 6.2rem 1fr;
+  }
+
+  .plates-detail {
+    grid-template-columns: 1fr;
+  }
+
+  .car-sighting-head {
+    grid-template-columns: 1fr;
+  }
+
+  .car-map {
+    height: 16rem;
   }
 
   .cam-grid[data-layout="six"],

@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Tesla video viewer</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -14,6 +15,7 @@
     </div>
     <p id="span-readout" class="span-readout">Add clip folders to begin.</p>
     <div class="top-actions">
+      <button type="button" id="btn-plates">Plates</button>
       <button type="button" id="btn-rescan">Rescan</button>
       <button type="button" id="btn-folders">Folders</button>
     </div>
@@ -31,16 +33,59 @@
     <div id="library-body" hidden>
       <nav id="month-nav" class="month-nav" aria-label="Months with clips"></nav>
       <section id="calendar" class="calendar" aria-label="Days with clips"></section>
-      <section id="day-panel" class="day-panel" hidden>
-        <div class="day-panel-head">
-          <h2 id="day-title">Day</h2>
-          <p id="day-meta" class="day-meta"></p>
-        </div>
-        <div id="day-rail" class="day-rail" role="list"></div>
-        <ol id="hour-scale" class="hour-scale"></ol>
-        <ul id="day-events" class="day-events"></ul>
-      </section>
     </div>
+  </main>
+
+  <main id="day-view" class="day-view" hidden>
+    <div class="day-bar">
+      <button type="button" id="btn-back-calendar">Back to calendar</button>
+      <div class="day-heading">
+        <h2 id="day-title">Day</h2>
+        <p id="day-meta" class="day-meta"></p>
+      </div>
+    </div>
+    <section class="day-panel">
+      <div id="day-rail" class="day-rail" role="list"></div>
+      <ol id="hour-scale" class="hour-scale"></ol>
+      <ul id="day-events" class="day-events"></ul>
+    </section>
+  </main>
+
+  <main id="plates-view" class="plates-view" hidden>
+    <div class="plates-bar">
+      <button type="button" id="btn-back-plates">Back to calendar</button>
+      <div class="day-heading">
+        <h2>All plates</h2>
+        <p id="plates-meta" class="day-meta"></p>
+      </div>
+      <label class="plates-raw">
+        <input type="checkbox" id="plates-raw-toggle">
+        Raw pixels
+      </label>
+    </div>
+    <div id="plates-filters" class="plates-filters">
+      <button type="button" data-filter="all" aria-pressed="true">All</button>
+      <button type="button" data-filter="classified">Classified</button>
+      <button type="button" data-filter="unclassified">Unclassified</button>
+    </div>
+    <div id="plates-detail" class="plates-detail" hidden>
+      <div class="plates-detail-meta">
+        <p id="plates-detail-text" class="plates-detail-text"></p>
+        <p id="plates-detail-state" class="plates-detail-state"></p>
+        <p id="plates-detail-info" class="plates-detail-info"></p>
+        <div class="plate-zoom-scale" id="plates-detail-scale">
+          <button type="button" data-zoom="1">1:1</button>
+          <button type="button" data-zoom="2">2×</button>
+          <button type="button" data-zoom="3">3×</button>
+        </div>
+        <button type="button" id="btn-open-plate-event" hidden>Open clip</button>
+      </div>
+      <div class="plate-zoom-frame plates-detail-frame">
+        <img id="plates-detail-img" alt="">
+      </div>
+    </div>
+    <p id="plates-empty" class="empty" hidden>No plates stored yet. Open a clip and scan plates.</p>
+    <ul id="plates-catalog" class="plates-catalog"></ul>
   </main>
 
   <section id="viewer-view" class="viewer-view" hidden>
@@ -59,7 +104,10 @@
       <button type="button" id="btn-fwd-10">+10s</button>
       <label class="scrub-wrap">
         <span class="sr-only">Event time</span>
-        <input id="scrubber" type="range" min="0" max="1" step="0.01" value="0">
+        <div class="scrub-track">
+          <div id="plate-marks" class="plate-marks"></div>
+          <input id="scrubber" type="range" min="0" max="1" step="0.01" value="0">
+        </div>
       </label>
       <p id="scrub-readout" class="scrub-readout">0:00 / 0:00</p>
       <button type="button" id="btn-show-all" hidden>Show all cameras</button>
@@ -72,10 +120,69 @@
     </div>
     <div class="plate-bar">
       <button type="button" id="btn-find-plates">Find plates</button>
-      <p id="plate-status" class="plate-status">FastALPR reads front, rear, and repeater cameras.</p>
+      <p id="plate-status" class="plate-status">Opening a clip queues a front-camera plate scan if it is not stored yet.</p>
       <ul id="plate-list" class="plate-list"></ul>
+      <div id="plate-zoom" class="plate-zoom" hidden>
+        <div class="plate-zoom-meta">
+          <p id="plate-zoom-label" class="plate-zoom-label"></p>
+          <p id="plate-zoom-size" class="plate-zoom-size"></p>
+          <div class="plate-zoom-scale">
+            <button type="button" data-zoom="1">1:1</button>
+            <button type="button" data-zoom="2">2×</button>
+            <button type="button" data-zoom="3">3×</button>
+          </div>
+        </div>
+        <div class="plate-zoom-shots">
+          <figure class="plate-zoom-shot">
+            <figcaption>Plate</figcaption>
+            <div class="plate-zoom-frame plate-zoom-frame-plate">
+              <img id="plate-zoom-img" alt="">
+            </div>
+          </figure>
+          <figure class="plate-zoom-shot">
+            <figcaption>Car</figcaption>
+            <button type="button" class="plate-zoom-open" data-shot="vehicle">
+              <img id="plate-zoom-vehicle" alt="">
+            </button>
+          </figure>
+          <figure class="plate-zoom-shot plate-zoom-shot-wide">
+            <figcaption>Full frame</figcaption>
+            <button type="button" class="plate-zoom-open" data-shot="frame">
+              <img id="plate-zoom-frame" alt="">
+            </button>
+          </figure>
+        </div>
+      </div>
     </div>
   </section>
+
+  <main id="car-view" class="car-view" hidden>
+    <div class="car-bar">
+      <button type="button" id="btn-back-car">Back</button>
+      <div class="car-heading">
+        <div class="car-title-row">
+          <img id="car-crop" class="car-crop" alt="" hidden>
+          <h2 id="car-title">Plate</h2>
+        </div>
+        <p id="car-meta" class="car-meta"></p>
+      </div>
+    </div>
+    <div class="car-body">
+      <div id="car-map-wrap" class="car-map-wrap" hidden>
+        <div id="car-map" class="car-map" role="img" aria-label="Map of where this car was seen"></div>
+      </div>
+      <p id="car-map-empty" class="car-map-empty" hidden>No GPS pins stored for this plate yet.</p>
+      <ol id="car-sightings" class="car-sightings"></ol>
+    </div>
+  </main>
+
+  <dialog id="plate-shot-dialog" class="plate-shot-dialog">
+    <form method="dialog">
+      <p id="plate-shot-caption" class="plate-shot-caption"></p>
+      <img id="plate-shot-img" alt="">
+      <button value="close">Close</button>
+    </form>
+  </dialog>
 
   <dialog id="folders-dialog" class="folders-dialog">
     <form method="dialog" id="folders-form">
@@ -99,7 +206,8 @@
     </form>
   </dialog>
 
-  <script src="playback.js?v=stitch4"></script>
-  <script src="app.js?v=stitch4"></script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script src="playback.js?v=plates1"></script>
+  <script src="app.js?v=plates1"></script>
 </body>
 </html>

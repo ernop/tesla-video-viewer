@@ -7,8 +7,19 @@ from datetime import datetime
 from pathlib import Path
 
 from app.scan import DEFAULT_SEGMENT_SEC, ClipFile
+from app.plate_region import classify_plate, packed_jurisdiction, unpacked_jurisdiction
 
 SCHEMA_VERSION = "1"
+
+PLATE_EXTRA_COLUMNS = (
+    ("jurisdiction_code", "TEXT"),
+    ("jurisdiction_name", "TEXT"),
+    ("jurisdiction_series", "TEXT"),
+    ("jurisdiction_kind", "TEXT"),
+    ("jurisdiction_confidence", "REAL"),
+    ("jurisdiction_alts", "TEXT"),
+    ("best_event_id", "TEXT"),
+)
 
 
 @dataclass
@@ -57,7 +68,14 @@ class ClipIndex:
                     last_seen TEXT NOT NULL,
                     appearance_count INTEGER NOT NULL DEFAULT 0,
                     best_confidence REAL NOT NULL DEFAULT 0,
-                    best_crop_id TEXT
+                    best_crop_id TEXT,
+                    jurisdiction_code TEXT,
+                    jurisdiction_name TEXT,
+                    jurisdiction_series TEXT,
+                    jurisdiction_kind TEXT,
+                    jurisdiction_confidence REAL,
+                    jurisdiction_alts TEXT,
+                    best_event_id TEXT
                 );
                 CREATE TABLE IF NOT EXISTS plate_appearances (
                     id TEXT PRIMARY KEY,
@@ -107,6 +125,7 @@ class ClipIndex:
                 "INSERT OR IGNORE INTO meta(key, value) VALUES ('scan_id', '0')",
             )
             self._conn.commit()
+        self._ensure_plate_columns()
         stored = self.get_meta("schema")
         if stored != SCHEMA_VERSION:
             raise ValueError(f"clip-index.sqlite3 schema {stored!r} is not {SCHEMA_VERSION}.")
@@ -114,6 +133,15 @@ class ClipIndex:
     def close(self) -> None:
         with self._lock:
             self._conn.close()
+
+    def _ensure_plate_columns(self) -> None:
+        with self._lock:
+            info = self._conn.execute("PRAGMA table_info(plates)").fetchall()
+            have = {str(row["name"]) for row in info}
+            for name, typ in PLATE_EXTRA_COLUMNS:
+                if name not in have:
+                    self._conn.execute(f"ALTER TABLE plates ADD COLUMN {name} {typ}")
+            self._conn.commit()
 
     def get_meta(self, key: str) -> str | None:
         with self._lock:
@@ -311,6 +339,18 @@ class ClipIndex:
             ).fetchall()
         return [{key: row[key] for key in row.keys()} for row in rows]
 
+    def list_appearances_for_plate(self, plate_text: str) -> list[dict[str, object]]:
+        with self._lock:
+            rows = self._conn.execute(
+                """
+                SELECT * FROM plate_appearances
+                WHERE plate_text = ?
+                ORDER BY time, elapsed_sec, camera
+                """,
+                (plate_text,),
+            ).fetchall()
+        return [{key: row[key] for key in row.keys()} for row in rows]
+
     def replace_event_appearances(
         self,
         event_id: str,
@@ -409,8 +449,18 @@ class ClipIndex:
             return
         best = self._conn.execute(
             """
-            SELECT crop_id, region FROM plate_appearances
+            SELECT crop_id, region, event_id, latitude, longitude, city, street
+            FROM plate_appearances
             WHERE plate_text = ?
+            ORDER BY ocr_confidence DESC, time ASC
+            LIMIT 1
+            """,
+            (text,),
+        ).fetchone()
+        loc = self._conn.execute(
+            """
+            SELECT latitude, longitude FROM plate_appearances
+            WHERE plate_text = ? AND latitude IS NOT NULL AND longitude IS NOT NULL
             ORDER BY ocr_confidence DESC, time ASC
             LIMIT 1
             """,
@@ -418,18 +468,31 @@ class ClipIndex:
         ).fetchone()
         region = None if best is None else best["region"]
         crop_id = None if best is None else best["crop_id"]
+        event_id = None if best is None else best["event_id"]
+        lat = None if loc is None else loc["latitude"]
+        lon = None if loc is None else loc["longitude"]
+        packed = packed_jurisdiction(classify_plate(text, lat=lat, lon=lon))
         self._conn.execute(
             """
             INSERT INTO plates(
-                text, region, first_seen, last_seen, appearance_count, best_confidence, best_crop_id
-            ) VALUES (?, ?, ?, ?, ?, ?, ?)
+                text, region, first_seen, last_seen, appearance_count, best_confidence,
+                best_crop_id, best_event_id, jurisdiction_code, jurisdiction_name,
+                jurisdiction_series, jurisdiction_kind, jurisdiction_confidence, jurisdiction_alts
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ON CONFLICT(text) DO UPDATE SET
                 region = excluded.region,
                 first_seen = excluded.first_seen,
                 last_seen = excluded.last_seen,
                 appearance_count = excluded.appearance_count,
                 best_confidence = excluded.best_confidence,
-                best_crop_id = excluded.best_crop_id
+                best_crop_id = excluded.best_crop_id,
+                best_event_id = excluded.best_event_id,
+                jurisdiction_code = excluded.jurisdiction_code,
+                jurisdiction_name = excluded.jurisdiction_name,
+                jurisdiction_series = excluded.jurisdiction_series,
+                jurisdiction_kind = excluded.jurisdiction_kind,
+                jurisdiction_confidence = excluded.jurisdiction_confidence,
+                jurisdiction_alts = excluded.jurisdiction_alts
             """,
             (
                 text,
@@ -439,5 +502,125 @@ class ClipIndex:
                 int(row["n"]),
                 float(row["best_confidence"] or 0),
                 crop_id,
+                event_id,
+                packed["jurisdiction_code"],
+                packed["jurisdiction_name"],
+                packed["jurisdiction_series"],
+                packed["jurisdiction_kind"],
+                packed["jurisdiction_confidence"],
+                packed["jurisdiction_alts"],
             ),
         )
+
+    def reclassify_unclassified_plates(self) -> int:
+        with self._lock:
+            rows = self._conn.execute(
+                """
+                SELECT text FROM plates
+                WHERE jurisdiction_code IS NULL
+                """
+            ).fetchall()
+            texts = [str(row["text"]) for row in rows]
+            for text in texts:
+                self._refresh_plate_row(text)
+            if texts:
+                self._conn.commit()
+        return len(texts)
+
+    def appearance_for_crop(self, crop_id: str) -> dict[str, object] | None:
+        with self._lock:
+            row = self._conn.execute(
+                """
+                SELECT * FROM plate_appearances
+                WHERE crop_id = ?
+                ORDER BY ocr_confidence DESC
+                LIMIT 1
+                """,
+                (crop_id,),
+            ).fetchone()
+        if row is None:
+            return None
+        return {key: row[key] for key in row.keys()}
+
+    def list_plates(self) -> list[dict[str, object]]:
+        with self._lock:
+            rows = self._conn.execute(
+                """
+                SELECT
+                    p.text,
+                    p.region,
+                    p.first_seen,
+                    p.last_seen,
+                    p.appearance_count,
+                    p.best_confidence,
+                    p.best_crop_id,
+                    p.best_event_id,
+                    p.jurisdiction_code,
+                    p.jurisdiction_name,
+                    p.jurisdiction_series,
+                    p.jurisdiction_kind,
+                    p.jurisdiction_confidence,
+                    p.jurisdiction_alts,
+                    (
+                        SELECT COUNT(DISTINCT event_id)
+                        FROM plate_appearances a
+                        WHERE a.plate_text = p.text
+                    ) AS event_count,
+                    (
+                        SELECT GROUP_CONCAT(DISTINCT day)
+                        FROM plate_appearances a
+                        WHERE a.plate_text = p.text
+                    ) AS days,
+                    (
+                        SELECT city FROM plate_appearances a
+                        WHERE a.plate_text = p.text AND a.city IS NOT NULL AND a.city != ''
+                        ORDER BY ocr_confidence DESC, time ASC
+                        LIMIT 1
+                    ) AS city,
+                    (
+                        SELECT street FROM plate_appearances a
+                        WHERE a.plate_text = p.text AND a.street IS NOT NULL AND a.street != ''
+                        ORDER BY ocr_confidence DESC, time ASC
+                        LIMIT 1
+                    ) AS street
+                FROM plates p
+                ORDER BY p.last_seen DESC, p.text
+                """
+            ).fetchall()
+            spans = self._conn.execute(
+                """
+                SELECT plate_text, event_id,
+                       MAX(elapsed_sec) - MIN(elapsed_sec) AS span
+                FROM plate_appearances
+                GROUP BY plate_text, event_id
+                """
+            ).fetchall()
+        seen_sec: dict[str, float] = {}
+        for row in spans:
+            text = str(row["plate_text"])
+            span = float(row["span"] or 0)
+            seen_sec[text] = seen_sec.get(text, 0.0) + max(span, 1.0)
+        plates: list[dict[str, object]] = []
+        for row in rows:
+            data = {key: row[key] for key in row.keys()}
+            days_raw = data.get("days") or ""
+            days = [part for part in str(days_raw).split(",") if part]
+            plates.append(
+                {
+                    "text": data["text"],
+                    "region": data.get("region"),
+                    "firstSeen": data.get("first_seen"),
+                    "lastSeen": data.get("last_seen"),
+                    "appearanceCount": int(data.get("appearance_count") or 0),
+                    "eventCount": int(data.get("event_count") or 0),
+                    "bestConfidence": float(data.get("best_confidence") or 0),
+                    "bestCropId": data.get("best_crop_id"),
+                    "bestEventId": data.get("best_event_id"),
+                    "city": data.get("city"),
+                    "street": data.get("street"),
+                    "days": days,
+                    "seenSec": round(seen_sec.get(str(data["text"]), 0.0), 1),
+                    "jurisdiction": unpacked_jurisdiction(data),
+                }
+            )
+        return plates
