@@ -5,8 +5,8 @@ alwaysApply: true
 
 # product.md is the design record
 
-`product.md` holds goals, intentions, product surface, runtime constraints, and decisions (including rejected approaches). A change is not finished until `product.md` matches it.
+`product.md` holds goals, intentions, product surface, runtime constraints, and decisions (including rejected approaches). A change is not finished until `product.md` matches it. This applies to every turn on this repo, not only when the user mentions the file.
 
-When you add, change, or drop a feature, or learn something that would change a future design choice, write it into `product.md` in the same turn. Include the why. If a path was tested and rejected, record the result so it is not proposed again as if it were unknown.
+When you add, change, or drop a feature, or learn something that would change a future design choice, write it into `product.md` in the same turn. Include the why. That includes playback, plates, location, UI, README screenshot policy, and tests that encode intended behavior. If a path was tested and rejected, record the result so it is not proposed again as if it were unknown.
 
-Do not put local paths, secrets, or clip contents in `product.md`. Runtime how-to stays in `README.md`. Design and intent stay in `product.md`.
+Do not put local paths, secrets, or clip contents in `product.md`. Do not publish identifiable real plates in `README.md` or `docs/`. Runtime how-to stays in `README.md`. Design and intent stay in `product.md`. If README and product.md disagree, fix README to match product.md.

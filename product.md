@@ -63,6 +63,57 @@ MP4s are H.264 High, `mp42`, with the `moov` atom at the end. Front is often
 2896×1876; other cameras 1448-wide. About one minute per file, ~36 fps.
 There is no standard EXIF/GPS atom and no GPX sidecar.
 
+Filenames are stamped about a minute apart, but **the files are not a clean
+60 seconds**. On this car, Recent clips are often ~61–63s long and the next
+stamp is ~65–66s later, leaving a hole of a few seconds with no footage.
+Probed duration of one file can overlap the next file’s start. Design the
+player around that, not around “Tesla writes exact 60s minutes.”
+
+## Playback (one clock)
+
+The viewer plays every camera on one event clock. Clock logic lives in
+`web/playback.js` so the browser and the stitch tests share it. `web/app.js`
+is the DOM host (double-buffer, prefetch, screenshots).
+
+Rules that were learned the hard way:
+
+- A clip owns the timeline **until the next file’s stamp**, not until its
+  probed duration runs out. Extra tail frames that overlap the next stamp
+  are skipped.
+- When a file ends and a later file exists, jump to that file’s offset even
+  if there is a gap (no footage in the hole). Do not pause at 1:01 and leave
+  a 7-minute event unfinished.
+- Only the **master** camera (prefer front) advances the clock. A shorter
+  repeater ending first must not steal a global “seeking” lock, or the
+  master never loads minute two.
+- Seeking is **per camera**. Loading the next MP4 blanks that element;
+  keep the last frame visible on a second video under the tile, swap when
+  the new file has a picture, and start prefetching the next minute a few
+  seconds before the current one ends. Grid tracks use `minmax(0, fr)` so
+  empty `<video>` tags cannot collapse the layout (that looked like a page
+  refresh).
+
+Validation: do not reason from invented 60s segments. The fixture
+`tests/fixtures/event_2026-08-21_17-26-55.json` is probed offsets and
+durations from a real Recent event (~7m 38s, seven files, first front file
+~61.5s, next stamp at 66s). `tests/test_playback.js` ticks all six cameras
+and must fail if playback freezes before 66s. CI installs Node for that
+test. Disabling the ended-handoff in the sim is the detector for the 1:01
+bug.
+
+Rejected: treating probed duration as the occupancy window (first file
+still “contains” 1:01); one boolean `seeking` for the whole grid; replacing
+`src` on the visible video (black flash and layout collapse).
+
+## Public docs
+
+`README.md` is how to run the app and what the UI looks like. `product.md`
+is goals, intent, and decisions. Screenshots in `docs/` may show the real
+calendar and day list. **Do not publish identifiable real plates** (OCR
+text or crop photos of other people’s cars). Plate UI in the README uses
+obvious dummy labels only (`SAMPLE`, `DEMO 42`, `EXAMPLE`). Real scans stay
+in local SQLite and `plate-crops/`.
+
 ## Location
 
 Tesla records place in three independent ways. The viewer shows the best
@@ -136,6 +187,7 @@ live trail during playback.
 3. **Day** — 24-hour rail plus a list: time, Saved/Sentry/Recent, source,
    place, cameras, duration.
 4. **Viewer** — all cameras on one scrubber. Click a camera to enlarge it.
+   Stitch and last-frame swap: see **Playback**.
 5. **Screenshots** — current camera or all cameras as full-resolution PNGs
    under `output_dir/<event-start>/`.
 6. **Plates (per clip)** — FastALPR on the **front camera only**, sampled at

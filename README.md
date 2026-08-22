@@ -2,24 +2,91 @@
 
 [![CI](https://github.com/ernop/tesla-video-viewer/actions/workflows/ci.yml/badge.svg)](https://github.com/ernop/tesla-video-viewer/actions/workflows/ci.yml)
 
-Local web app for Tesla Model Y saved clips. It groups the separate camera
-files from one save, lets you move by day and time, and plays every camera
-together.
+Local web app for TeslaCam footage already on this machine. Point it at one
+or more folders, browse by day, and play every camera on one clock. It does
+not talk to Tesla servers and it does not move the MP4s.
 
-Tesla writes one MP4 per camera. A 2023 Model Y typically has six files per
-minute: `front`, `back`, `left_repeater`, `right_repeater`, `left_pillar`,
-and `right_pillar`. File names look like:
+Built around a 2023 Model Y six-camera layout. Other TeslaCam dumps with the
+same file names work too.
+
+## UI
+
+**Calendar.** Months with clips are listed. Amber days have footage; dark days
+are empty. Each amber cell shows how many events that day starts with.
+
+![Calendar and day list](docs/calendar.png)
+
+Pick a day and you get a 24-hour rail plus a list: time, Saved / Sentry /
+Recent, which disk, place if we could read it, which cameras exist, duration.
+
+**Player.** All cameras share one scrubber. Click a camera to enlarge it.
+Screenshots write full-resolution PNGs. Place (city, street, map pin) sits
+above the grid when the clip has it.
+
+![Six-camera player](docs/viewer.png)
+
+**Plates.** Opening a clip can queue a FastALPR scan of the **front**
+camera (1 fps). Hits show up as cards under **Find plates**. Click a card
+to jump the clock there. Header **Plates** is the catalog of every stored
+plate. The screenshot below uses dummy labels only — real scans stay on
+your machine.
+
+![Find plates](docs/plates.png)
+
+## Features
+
+- **Several sources at once.** USB TeslaCam, a folder dump, another disk.
+  A missing drive stays listed and drops out of the scan until you plug it
+  in and rescan.
+- **Saved, Sentry, and Recent.** Folder layout plus `event.json` decide the
+  kind. Recent clips are grouped when their timestamps are adjacent.
+- **One clock for every camera.** Tesla writes ~1 minute files that often
+  overlap or have a few seconds of gap. Playback hands off at the next
+  stamp and keeps the last frame up while the next file loads.
+- **Place.** Saved/Sentry pins from `event.json` (city, street, coarse lat/lon).
+  Newer driving clips also have city/street in MP4 tags, and firmware
+  2025.44.25+ can embed GPS in the video. Recent clips get a pin from that
+  GPS when there is no sidecar.
+- **Plates.** FastALPR on the front camera at 1 fps. Results live in
+  `clip-index.sqlite3`. Click a plate, use scrubber marks, or open the
+  catalog / car page from the header.
+- **Stills.** Screenshot this camera, or all cameras, at the current time.
+  Files land in `output_dir/<event-start>/`.
+- **Incremental index.** SQLite next to `config.json`. Restart loads it at
+  once. A later scan only re-reads files whose size or mtime changed.
+
+Keyboard in the player:
+
+| Key | Action |
+| --- | --- |
+| Space | Play / pause |
+| Left / Right | Skip 10 seconds (Ctrl: 1 minute) |
+| s | Screenshot the focused camera |
+| Shift+S | Screenshot every camera |
+| Esc | Leave focus, then back to the day |
+
+## Tesla files
+
+One MP4 per camera per minute. Names look like:
 
 `2023-08-21_15-30-45-front.mp4`
 
-Point the app at every folder that holds those files. The calendar
-merges them. A missing drive stays listed and drops out of the scan
-until you attach it and rescan.
+Cameras: `front`, `back` (sometimes `rear`), `left_repeater`,
+`right_repeater`, `left_pillar`, `right_pillar`.
+
+On the USB stick:
+
+| Folder | What it is |
+| --- | --- |
+| `TeslaCam/RecentClips/` | Rolling driving buffer. No `event.json`. |
+| `TeslaCam/SavedClips/<stamp>/` | Dashcam / honk save. Has `event.json`. |
+| `TeslaCam/SentryClips/<stamp>/` | Sentry trigger. Same sidecar. |
+| `TeslaCam/EncryptedClips/` | Same layout, encrypted. This app skips those files. |
 
 ## Run
 
-Install Python 3.13+, ffmpeg, and ffprobe. ffmpeg is already on this
-workstation.
+Python 3.13+, ffmpeg, and ffprobe. Plate scans run on **CPU** on this
+install (DirectML crashes the FastALPR models here).
 
 ```powershell
 cd C:\proj\tesla-video-viewer
@@ -31,63 +98,35 @@ copy config.example.json config.json
 
 Edit `config.json`:
 
-- `sources`: one or more TeslaCam folders, USB drives, or clip dumps
-- `output_dir`: folder for full-resolution PNG dumps
-
-Start the server:
+- `sources` — TeslaCam folders, USB drives, or clip dumps
+- `output_dir` — folder for PNG dumps
 
 ```powershell
 python -m app
 ```
 
-Open http://127.0.0.1:8765/
-
-Add folders in **Folders**. Example sources:
-
-- `C:\tesla-video`
-- a TeslaCam folder on `D:`
-
-You can also pass folders on the command line:
+Open http://127.0.0.1:8765/ and add folders in **Folders**. You can also
+pass sources on the command line:
 
 ```powershell
 python -m app --source C:\tesla-video --source D:\TeslaCam --output-dir C:\proj\tesla-video-viewer\screenshots
 ```
 
-The scan writes a SQLite index next to `config.json` as `clip-index.sqlite3`.
-Clip files stay in place. Restarting the server loads that index at once.
-A later scan only re-reads files whose size or mtime changed.
-
-Save and scan returns immediately. A status line shows files seen while
-the walk runs in the background. If the walk stops early, already written
-rows stay in SQLite. The next scan continues from those rows and only
-removes missing files after it finishes a source folder.
-
-## Use
-
-1. Days with clips are amber on the calendar. Empty days stay dark.
-2. Open a day. The 24-hour rail shows clip times. The list shows each event.
-3. Open an event. All cameras play on one clock.
-4. Click a camera to enlarge it. Click **Show all cameras** to restore the grid.
-5. **Screenshot this camera** writes one PNG. **Screenshot all cameras**
-   writes every camera at the current time.
-6. PNGs land in `output_dir/<event-start>/`. Names include the frame time
-   and camera.
-7. Opening a clip queues a FastALPR scan of the front camera at 1 fps
-   if that event is not stored yet. Iridescent boxes mark plates on the
-   video. Click a plate to open it. Marks on the scrubber show each hit.
-   Prev/Next steps through those times. Results live in `plates` and
-   `plate_appearances` in `clip-index.sqlite3`.
-
-Keyboard in the viewer:
-
-- Space: play or pause
-- Left / Right: skip 10 seconds (Ctrl: 1 minute)
-- s: screenshot the focused camera
-- Shift+S: screenshot every camera
-- Esc: leave focus, then return to the day
+Save and scan returns immediately. A status line shows files while the walk
+runs. If the walk stops early, already written rows stay in SQLite.
 
 ## Tests
 
 ```powershell
 python -m pytest
 ```
+
+Playback stitch tests need Node (CI installs it). They replay a real Recent
+event’s timestamps so a freeze at 1:01 fails the build.
+
+## Not in scope
+
+- Decrypting `EncryptedClips`
+- Uploading clips or calling Tesla’s fleet APIs
+- Editing or deleting footage on the USB drive
+- A live moving map (GPS is a single pin today)
