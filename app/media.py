@@ -6,6 +6,7 @@ from pathlib import Path
 
 PROBE_TIMEOUT_SEC = 20
 EXTRACT_TIMEOUT_SEC = 60
+JPEG_SEQUENCE_TIMEOUT_SEC = 180
 
 
 class MediaError(RuntimeError):
@@ -88,3 +89,40 @@ def extract_png(source: Path, offset_sec: float, dest: Path) -> None:
     if completed.returncode != 0 or not dest.is_file() or dest.stat().st_size == 0:
         err = (completed.stderr or completed.stdout or "ffmpeg wrote no PNG").strip()
         raise MediaError(f"ffmpeg failed for {source.name} at {offset_sec:.3f}s: {err}")
+
+
+def extract_jpeg_sequence(source: Path, dest_dir: Path, fps: float = 1.0) -> list[Path]:
+    if fps <= 0:
+        raise MediaError("Frame sample rate must be positive.")
+    ffmpeg = require_tool("ffmpeg")
+    dest_dir.mkdir(parents=True, exist_ok=True)
+    pattern = dest_dir / "f_%06d.jpg"
+    command = [
+        ffmpeg,
+        "-hide_banner",
+        "-loglevel",
+        "error",
+        "-y",
+        "-i",
+        str(source),
+        "-vf",
+        f"fps={fps}",
+        "-q:v",
+        "3",
+        str(pattern),
+    ]
+    try:
+        completed = subprocess.run(
+            command,
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=JPEG_SEQUENCE_TIMEOUT_SEC,
+        )
+    except subprocess.TimeoutExpired as exc:
+        raise MediaError(f"ffmpeg timed out extracting frames from {source.name}") from exc
+    files = sorted(dest_dir.glob("f_*.jpg"))
+    if completed.returncode != 0 and not files:
+        err = (completed.stderr or completed.stdout or "ffmpeg wrote no JPEGs").strip()
+        raise MediaError(f"ffmpeg failed extracting frames from {source.name}: {err}")
+    return files

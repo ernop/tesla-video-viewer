@@ -50,6 +50,53 @@ class ClipIndex:
                     skipped INTEGER NOT NULL DEFAULT 0
                 );
                 CREATE INDEX IF NOT EXISTS clips_source ON clips(source_path);
+                CREATE TABLE IF NOT EXISTS plates (
+                    text TEXT PRIMARY KEY,
+                    region TEXT,
+                    first_seen TEXT NOT NULL,
+                    last_seen TEXT NOT NULL,
+                    appearance_count INTEGER NOT NULL DEFAULT 0,
+                    best_confidence REAL NOT NULL DEFAULT 0,
+                    best_crop_id TEXT
+                );
+                CREATE TABLE IF NOT EXISTS plate_appearances (
+                    id TEXT PRIMARY KEY,
+                    plate_text TEXT NOT NULL,
+                    event_id TEXT NOT NULL,
+                    day TEXT NOT NULL,
+                    time TEXT NOT NULL,
+                    elapsed_sec REAL NOT NULL,
+                    camera TEXT NOT NULL,
+                    video_path TEXT,
+                    crop_id TEXT,
+                    region TEXT,
+                    detect_confidence REAL,
+                    ocr_confidence REAL,
+                    bbox_x1 INTEGER,
+                    bbox_y1 INTEGER,
+                    bbox_x2 INTEGER,
+                    bbox_y2 INTEGER,
+                    latitude REAL,
+                    longitude REAL,
+                    location_source TEXT,
+                    city TEXT,
+                    street TEXT
+                );
+                CREATE INDEX IF NOT EXISTS plate_appearances_event ON plate_appearances(event_id);
+                CREATE INDEX IF NOT EXISTS plate_appearances_plate ON plate_appearances(plate_text);
+                CREATE INDEX IF NOT EXISTS plate_appearances_day ON plate_appearances(day);
+                CREATE TABLE IF NOT EXISTS plate_scans (
+                    event_id TEXT PRIMARY KEY,
+                    state TEXT NOT NULL,
+                    frames_done INTEGER NOT NULL DEFAULT 0,
+                    frames_total INTEGER NOT NULL DEFAULT 0,
+                    detector TEXT,
+                    ocr TEXT,
+                    provider TEXT,
+                    error TEXT,
+                    started_at TEXT,
+                    finished_at TEXT
+                );
                 """
             )
             self._conn.execute(
@@ -236,3 +283,161 @@ class ClipIndex:
         with self._lock:
             row = self._conn.execute("SELECT COUNT(*) AS n FROM clips WHERE skipped = 0").fetchone()
         return 0 if row is None else int(row["n"])
+
+    def reset_incomplete_plate_scans(self) -> None:
+        with self._lock:
+            self._conn.execute("DELETE FROM plate_scans WHERE state != 'complete'")
+            self._conn.commit()
+
+    def get_plate_scan(self, event_id: str) -> dict[str, object] | None:
+        with self._lock:
+            row = self._conn.execute(
+                "SELECT * FROM plate_scans WHERE event_id = ?",
+                (event_id,),
+            ).fetchone()
+        if row is None:
+            return None
+        return {key: row[key] for key in row.keys()}
+
+    def list_appearances(self, event_id: str) -> list[dict[str, object]]:
+        with self._lock:
+            rows = self._conn.execute(
+                """
+                SELECT * FROM plate_appearances
+                WHERE event_id = ?
+                ORDER BY elapsed_sec, camera
+                """,
+                (event_id,),
+            ).fetchall()
+        return [{key: row[key] for key in row.keys()} for row in rows]
+
+    def replace_event_appearances(
+        self,
+        event_id: str,
+        appearances: list[dict[str, object]],
+        scan: dict[str, object],
+    ) -> None:
+        with self._lock:
+            old_rows = self._conn.execute(
+                "SELECT DISTINCT plate_text FROM plate_appearances WHERE event_id = ?",
+                (event_id,),
+            ).fetchall()
+            affected = {str(row["plate_text"]) for row in old_rows}
+            self._conn.execute("DELETE FROM plate_appearances WHERE event_id = ?", (event_id,))
+            for item in appearances:
+                text = str(item["plate_text"])
+                affected.add(text)
+                self._conn.execute(
+                    """
+                    INSERT INTO plate_appearances(
+                        id, plate_text, event_id, day, time, elapsed_sec, camera,
+                        video_path, crop_id, region, detect_confidence, ocr_confidence,
+                        bbox_x1, bbox_y1, bbox_x2, bbox_y2,
+                        latitude, longitude, location_source, city, street
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    """,
+                    (
+                        item["id"],
+                        text,
+                        event_id,
+                        item["day"],
+                        item["time"],
+                        item["elapsed_sec"],
+                        item["camera"],
+                        item.get("video_path"),
+                        item.get("crop_id"),
+                        item.get("region"),
+                        item.get("detect_confidence"),
+                        item.get("ocr_confidence"),
+                        item.get("bbox_x1"),
+                        item.get("bbox_y1"),
+                        item.get("bbox_x2"),
+                        item.get("bbox_y2"),
+                        item.get("latitude"),
+                        item.get("longitude"),
+                        item.get("location_source"),
+                        item.get("city"),
+                        item.get("street"),
+                    ),
+                )
+            for text in affected:
+                self._refresh_plate_row(text)
+            self._conn.execute(
+                """
+                INSERT INTO plate_scans(
+                    event_id, state, frames_done, frames_total, detector, ocr,
+                    provider, error, started_at, finished_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(event_id) DO UPDATE SET
+                    state = excluded.state,
+                    frames_done = excluded.frames_done,
+                    frames_total = excluded.frames_total,
+                    detector = excluded.detector,
+                    ocr = excluded.ocr,
+                    provider = excluded.provider,
+                    error = excluded.error,
+                    started_at = excluded.started_at,
+                    finished_at = excluded.finished_at
+                """,
+                (
+                    event_id,
+                    scan.get("state"),
+                    scan.get("frames_done") or 0,
+                    scan.get("frames_total") or 0,
+                    scan.get("detector"),
+                    scan.get("ocr"),
+                    scan.get("provider"),
+                    scan.get("error"),
+                    scan.get("started_at"),
+                    scan.get("finished_at"),
+                ),
+            )
+            self._conn.commit()
+
+    def _refresh_plate_row(self, text: str) -> None:
+        row = self._conn.execute(
+            """
+            SELECT COUNT(*) AS n, MIN(time) AS first_seen, MAX(time) AS last_seen,
+                   MAX(ocr_confidence) AS best_confidence
+            FROM plate_appearances
+            WHERE plate_text = ?
+            """,
+            (text,),
+        ).fetchone()
+        if row is None or int(row["n"]) == 0:
+            self._conn.execute("DELETE FROM plates WHERE text = ?", (text,))
+            return
+        best = self._conn.execute(
+            """
+            SELECT crop_id, region FROM plate_appearances
+            WHERE plate_text = ?
+            ORDER BY ocr_confidence DESC, time ASC
+            LIMIT 1
+            """,
+            (text,),
+        ).fetchone()
+        region = None if best is None else best["region"]
+        crop_id = None if best is None else best["crop_id"]
+        self._conn.execute(
+            """
+            INSERT INTO plates(
+                text, region, first_seen, last_seen, appearance_count, best_confidence, best_crop_id
+            ) VALUES (?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(text) DO UPDATE SET
+                region = excluded.region,
+                first_seen = excluded.first_seen,
+                last_seen = excluded.last_seen,
+                appearance_count = excluded.appearance_count,
+                best_confidence = excluded.best_confidence,
+                best_crop_id = excluded.best_crop_id
+            """,
+            (
+                text,
+                region,
+                str(row["first_seen"]),
+                str(row["last_seen"]),
+                int(row["n"]),
+                float(row["best_confidence"] or 0),
+                crop_id,
+            ),
+        )

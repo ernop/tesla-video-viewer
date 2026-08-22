@@ -46,7 +46,10 @@
   <section id="viewer-view" class="viewer-view" hidden>
     <div class="viewer-bar">
       <button type="button" id="btn-back">Back to day</button>
-      <p id="viewer-title" class="viewer-title"></p>
+      <div class="viewer-heading">
+        <p id="viewer-title" class="viewer-title"></p>
+        <p id="viewer-place" class="viewer-place" hidden></p>
+      </div>
       <p id="viewer-clock" class="viewer-clock"></p>
     </div>
     <div id="cam-grid" class="cam-grid" data-layout="six"></div>
@@ -66,6 +69,11 @@
       <button type="button" id="btn-shot-all" class="dump dump-all">Screenshot all cameras</button>
       <p id="dump-status" class="dump-status"></p>
       <button type="button" id="btn-open-dump" hidden>Open folder</button>
+    </div>
+    <div class="plate-bar">
+      <button type="button" id="btn-find-plates">Find plates</button>
+      <p id="plate-status" class="plate-status">FastALPR reads front, rear, and repeater cameras.</p>
+      <ul id="plate-list" class="plate-list"></ul>
     </div>
   </section>
 
@@ -91,6 +99,7 @@
     </form>
   </dialog>
 
-  <script src="app.js"></script>
+  <script src="playback.js?v=stitch4"></script>
+  <script src="app.js?v=stitch4"></script>
 </body>
 </html>

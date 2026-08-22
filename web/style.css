@@ -307,7 +307,7 @@ button.dump-all {
   width: 100%;
   text-align: left;
   display: grid;
-  grid-template-columns: 8.5rem 5.5rem 8rem 1fr auto;
+  grid-template-columns: 8.5rem 5.5rem 8rem minmax(8rem, 1.1fr) 1fr auto;
   gap: 0.75rem;
   align-items: baseline;
 }
@@ -343,9 +343,40 @@ button.dump-all {
   padding: 0.7rem 1rem;
 }
 
+.viewer-heading {
+  min-width: 0;
+}
+
 .viewer-title, .viewer-clock {
   margin: 0;
   font-family: ui-monospace, "Cascadia Mono", monospace;
+}
+
+.viewer-place {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem 0.9rem;
+  margin: 0.25rem 0 0;
+  color: var(--tan);
+  font-size: 0.92rem;
+}
+
+.viewer-place a {
+  color: var(--amber);
+}
+
+.viewer-place .place-source {
+  color: #9d8d6a;
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.place {
+  color: var(--tan);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .viewer-clock {
@@ -363,7 +394,7 @@ button.dump-all {
 
 .cam-grid[data-layout="six"] {
   grid-template-columns: 1fr 1.35fr 1fr;
-  grid-template-rows: 1.15fr 0.85fr;
+  grid-template-rows: minmax(0, 1.15fr) minmax(0, 0.85fr);
   grid-template-areas:
     "lrep front rrep"
     "lp back rp";
@@ -371,7 +402,7 @@ button.dump-all {
 
 .cam-grid[data-layout="four"] {
   grid-template-columns: 1fr 1.35fr 1fr;
-  grid-template-rows: 1.15fr 0.85fr;
+  grid-template-rows: minmax(0, 1.15fr) minmax(0, 0.85fr);
   grid-template-areas:
     "lrep front rrep"
     "lrep back rrep";
@@ -416,6 +447,8 @@ button.dump-all {
 }
 
 .cam-tile video {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   object-fit: contain;
@@ -423,8 +456,14 @@ button.dump-all {
   display: block;
 }
 
+.cam-tile video.standby {
+  visibility: hidden;
+  pointer-events: none;
+}
+
 .cam-tile .label {
   position: absolute;
+  z-index: 2;
   left: 0.4rem;
   top: 0.35rem;
   margin: 0;
@@ -438,6 +477,7 @@ button.dump-all {
 
 .cam-tile .missing {
   position: absolute;
+  z-index: 2;
   inset: 0;
   display: none;
   place-items: center;
@@ -454,12 +494,65 @@ button.dump-all {
   border-color: var(--amber);
 }
 
-.transport, .dump-bar {
+.transport, .dump-bar, .plate-bar {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem 0.7rem;
   align-items: center;
   padding: 0.7rem 1rem 1rem;
+}
+
+.plate-bar {
+  align-items: flex-start;
+  border-top: 1px solid var(--line);
+}
+
+.plate-status {
+  margin: 0;
+  color: var(--tan);
+  flex: 1;
+  min-width: 12rem;
+}
+
+.plate-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+  gap: 0.5rem;
+}
+
+.plate-list button {
+  display: grid;
+  grid-template-columns: 5.5rem 1fr;
+  gap: 0.55rem;
+  width: 100%;
+  text-align: left;
+  align-items: center;
+  padding: 0.35rem;
+}
+
+.plate-list img {
+  width: 5.5rem;
+  height: 2.4rem;
+  object-fit: contain;
+  background: #000;
+}
+
+.plate-list .plate-text {
+  margin: 0;
+  font-family: ui-monospace, "Cascadia Mono", monospace;
+  font-size: 1.05rem;
+  letter-spacing: 0.08em;
+  color: var(--ink);
+}
+
+.plate-list .plate-meta {
+  margin: 0.15rem 0 0;
+  color: var(--tan);
+  font-size: 0.78rem;
 }
 
 .scrub-wrap {
@@ -553,6 +646,7 @@ button.dump-all {
   .cam-grid[data-layout="six"],
   .cam-grid[data-layout="four"] {
     grid-template-columns: 1fr 1fr;
+    grid-template-rows: repeat(4, minmax(0, 1fr));
     grid-template-areas:
       "front front"
       "lrep rrep"

@@ -1,0 +1,79 @@
+{
+  "id": "770431369fffde9c1a040259",
+  "start": "2026-08-21T17:26:55",
+  "durationSec": 458.1669,
+  "cameras": [
+    {
+      "id": "left_repeater",
+      "segments": [
+        {"index": 0, "offsetSec": 0, "durationSec": 61.82},
+        {"index": 1, "offsetSec": 66, "durationSec": 62.084},
+        {"index": 2, "offsetSec": 131, "durationSec": 61.9716},
+        {"index": 3, "offsetSec": 197, "durationSec": 63.554},
+        {"index": 4, "offsetSec": 264, "durationSec": 59.7469},
+        {"index": 5, "offsetSec": 328, "durationSec": 63.2746},
+        {"index": 6, "offsetSec": 395, "durationSec": 62.9899}
+      ]
+    },
+    {
+      "id": "front",
+      "segments": [
+        {"index": 0, "offsetSec": 0, "durationSec": 61.4764},
+        {"index": 1, "offsetSec": 66, "durationSec": 62.2198},
+        {"index": 2, "offsetSec": 131, "durationSec": 62.1399},
+        {"index": 3, "offsetSec": 197, "durationSec": 63.1938},
+        {"index": 4, "offsetSec": 264, "durationSec": 59.8847},
+        {"index": 5, "offsetSec": 328, "durationSec": 63.4126},
+        {"index": 6, "offsetSec": 395, "durationSec": 63.1669}
+      ]
+    },
+    {
+      "id": "right_repeater",
+      "segments": [
+        {"index": 0, "offsetSec": 0, "durationSec": 61.3995},
+        {"index": 1, "offsetSec": 66, "durationSec": 62.1339},
+        {"index": 2, "offsetSec": 131, "durationSec": 62.0558},
+        {"index": 3, "offsetSec": 197, "durationSec": 63.108},
+        {"index": 4, "offsetSec": 264, "durationSec": 59.81},
+        {"index": 5, "offsetSec": 328, "durationSec": 63.3062},
+        {"index": 6, "offsetSec": 395, "durationSec": 63.0822}
+      ]
+    },
+    {
+      "id": "left_pillar",
+      "segments": [
+        {"index": 0, "offsetSec": 0, "durationSec": 61.4126},
+        {"index": 1, "offsetSec": 66, "durationSec": 62.1674},
+        {"index": 2, "offsetSec": 131, "durationSec": 62.0843},
+        {"index": 3, "offsetSec": 197, "durationSec": 63.1368},
+        {"index": 4, "offsetSec": 264, "durationSec": 59.8375},
+        {"index": 5, "offsetSec": 328, "durationSec": 63.3587},
+        {"index": 6, "offsetSec": 395, "durationSec": 63.11}
+      ]
+    },
+    {
+      "id": "back",
+      "segments": [
+        {"index": 0, "offsetSec": 0, "durationSec": 61.4986},
+        {"index": 1, "offsetSec": 66, "durationSec": 62.2341},
+        {"index": 2, "offsetSec": 131, "durationSec": 62.145},
+        {"index": 3, "offsetSec": 197, "durationSec": 63.2207},
+        {"index": 4, "offsetSec": 264, "durationSec": 59.8985},
+        {"index": 5, "offsetSec": 328, "durationSec": 63.3818},
+        {"index": 6, "offsetSec": 395, "durationSec": 63.1544}
+      ]
+    },
+    {
+      "id": "right_pillar",
+      "segments": [
+        {"index": 0, "offsetSec": 0, "durationSec": 61.4154},
+        {"index": 1, "offsetSec": 66, "durationSec": 62.1356},
+        {"index": 2, "offsetSec": 131, "durationSec": 62.0688},
+        {"index": 3, "offsetSec": 197, "durationSec": 63.1484},
+        {"index": 4, "offsetSec": 264, "durationSec": 59.813},
+        {"index": 5, "offsetSec": 328, "durationSec": 63.3413},
+        {"index": 6, "offsetSec": 395, "durationSec": 63.0707}
+      ]
+    }
+  ]
+}

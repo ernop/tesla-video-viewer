@@ -1,12 +1,13 @@
 from __future__ import annotations
 
 import hashlib
-import json
 import logging
 import re
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from pathlib import Path
+
+from app.location import read_event_sidecar
 
 LOGGER = logging.getLogger("tesla-video-viewer.scan")
 
@@ -81,7 +82,11 @@ class Event:
     source_label: str
     label: str | None = None
     city: str | None = None
+    street: str | None = None
     reason: str | None = None
+    latitude: float | None = None
+    longitude: float | None = None
+    location_source: str | None = None
     assumed_duration: bool = True
 
     def camera_names(self) -> list[str]:
@@ -129,14 +134,21 @@ class Event:
             return None
         if elapsed_sec < 0:
             return None
-        for segment in track.segments:
-            local = elapsed_sec - (segment.stamp - self.start).total_seconds()
+        segments = track.segments
+        for index, segment in enumerate(segments):
+            start = (segment.stamp - self.start).total_seconds()
+            local = elapsed_sec - start
             if local < -1e-3:
                 continue
+            nxt = segments[index + 1] if index + 1 < len(segments) else None
+            if nxt is not None:
+                next_start = (nxt.stamp - self.start).total_seconds()
+                if elapsed_sec >= next_start:
+                    continue
             if local < segment.duration_sec:
                 return segment, max(0.0, local)
-        if track.segments:
-            last = track.segments[-1]
+        if segments:
+            last = segments[-1]
             local = elapsed_sec - (last.stamp - self.start).total_seconds()
             if 0 <= local <= last.duration_sec + 0.5:
                 return last, min(max(local, 0.0), max(last.duration_sec - 0.001, 0.0))
@@ -250,29 +262,6 @@ def _event_id(source_key: str, kind: str, key: str, start: datetime) -> str:
     return hashlib.sha256(payload.encode("utf-8")).hexdigest()[:24]
 
 
-def _read_event_json(folder: Path) -> tuple[str | None, str | None, str | None]:
-    sidecar = folder / "event.json"
-    if not sidecar.is_file():
-        return None, None, None
-    try:
-        text = sidecar.read_text(encoding="utf-8")
-        data = json.loads(text)
-    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
-        LOGGER.warning("Ignore malformed event.json at %s: %s", sidecar, exc)
-        return None, None, None
-    if not isinstance(data, dict):
-        LOGGER.warning("Ignore non-object event.json at %s", sidecar)
-        return None, None, None
-    city = data.get("city")
-    reason = data.get("reason")
-    timestamp = data.get("timestamp")
-    label_city = city.strip() if isinstance(city, str) and city.strip() else None
-    label_reason = reason.strip() if isinstance(reason, str) and reason.strip() else None
-    label_time = timestamp.strip() if isinstance(timestamp, str) and timestamp.strip() else None
-    label = label_reason or label_city or label_time
-    return label, label_city, label_reason
-
-
 KNOWN_SKIP_NAMES = {"event.mp4"}
 
 
@@ -364,9 +353,7 @@ def _event_from_clips(
     start = clips_sorted[0].stamp
     source_key = str(source_path.resolve())
     event_id = _event_id(source_key, kind, key, start)
-    label, city, reason = (None, None, None)
-    if folder is not None:
-        label, city, reason = _read_event_json(folder)
+    meta = read_event_sidecar(folder) if folder is not None else None
     return Event(
         id=event_id,
         kind=kind,
@@ -375,9 +362,13 @@ def _event_from_clips(
         cameras=_tracks_from_clips(clips_sorted),
         source_path=source_path,
         source_label=source_label,
-        label=label,
-        city=city,
-        reason=reason,
+        label=None if meta is None else meta.label,
+        city=None if meta is None else meta.city,
+        street=None if meta is None else meta.street,
+        reason=None if meta is None else meta.reason,
+        latitude=None if meta is None else meta.latitude,
+        longitude=None if meta is None else meta.longitude,
+        location_source=None if meta is None else meta.source,
         assumed_duration=True,
     )
 

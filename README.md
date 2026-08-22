@@ -72,6 +72,8 @@ removes missing files after it finishes a source folder.
    writes every camera at the current time.
 6. PNGs land in `output_dir/<event-start>/`. Names include the frame time
    and camera.
+7. **Find plates** runs FastALPR on front, rear, and repeater cameras.
+   Click a plate to jump to that time.
 
 Keyboard in the viewer:
 

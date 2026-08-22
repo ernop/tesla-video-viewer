@@ -39,7 +39,10 @@ def test_saved_folder_is_one_event(tmp_path: Path) -> None:
     _touch(folder / "2023-08-21_15-30-45-right_repeater.mp4")
     _touch(folder / "2023-08-21_15-31-45-front.mp4")
     _touch(folder / "2023-08-21_15-31-45-back.mp4")
-    (folder / "event.json").write_text('{"city":"Austin","reason":"user_interaction"}', encoding="utf-8")
+    (folder / "event.json").write_text(
+        '{"city":"Austin","street":"S Congress Ave","est_lat":"30.2672","est_lon":"-97.7431","reason":"user_interaction"}',
+        encoding="utf-8",
+    )
 
     library = build_library(root)
     assert library.clip_count == 6
@@ -48,6 +51,10 @@ def test_saved_folder_is_one_event(tmp_path: Path) -> None:
     assert event.kind == "saved"
     assert event.reason == "user_interaction"
     assert event.city == "Austin"
+    assert event.street == "S Congress Ave"
+    assert event.latitude == 30.2672
+    assert event.longitude == -97.7431
+    assert event.location_source == "event.json"
     assert event.layout() == "four"
     assert event.duration_sec() == 120.0
     assert library.days["2023-08-21"].times == ["15:30"]
@@ -64,6 +71,43 @@ def test_recent_clips_split_on_time_gap(tmp_path: Path) -> None:
     starts = sorted(event.start for event in library.events.values())
     assert starts[0] == datetime(2023, 8, 22, 8, 0, 0)
     assert starts[1] == datetime(2023, 8, 22, 10, 0, 0)
+
+
+def test_gap_between_tesla_minutes_has_no_segment(tmp_path: Path) -> None:
+    folder = tmp_path / "RecentClips"
+    _touch(folder / "2026-08-21_17-26-55-front.mp4")
+    _touch(folder / "2026-08-21_17-28-01-front.mp4")
+    library = build_library(tmp_path)
+    event = next(iter(library.events.values()))
+    for track in event.cameras.values():
+        track.segments[0].duration_sec = 61.48
+        track.segments[1].duration_sec = 62.22
+    assert event.segment_for("front", 61.0)[0].stamp == datetime(2026, 8, 21, 17, 26, 55)
+    assert event.segment_for("front", 63.0) is None
+    later = event.segment_for("front", 66.5)
+    assert later is not None
+    assert later[0].stamp == datetime(2026, 8, 21, 17, 28, 1)
+    assert later[1] == 0.5
+
+
+def test_overlapping_minute_files_hand_off_at_next_stamp(tmp_path: Path) -> None:
+    folder = tmp_path / "SavedClips" / "2026-08-21_17-27-56"
+    _touch(folder / "2026-08-21_17-27-56-front.mp4")
+    _touch(folder / "2026-08-21_17-28-56-front.mp4")
+    library = build_library(tmp_path)
+    event = next(iter(library.events.values()))
+    for track in event.cameras.values():
+        for segment in track.segments:
+            segment.duration_sec = 61.0
+            segment.duration_source = "ffprobe"
+    early = event.segment_for("front", 59.0)
+    assert early is not None
+    assert early[0].stamp == datetime(2026, 8, 21, 17, 27, 56)
+    assert early[1] == 59.0
+    overlap = event.segment_for("front", 60.5)
+    assert overlap is not None
+    assert overlap[0].stamp == datetime(2026, 8, 21, 17, 28, 56)
+    assert overlap[1] == 0.5
 
 
 def test_six_camera_layout_and_segment_lookup(tmp_path: Path) -> None:
@@ -142,3 +186,6 @@ def test_binary_event_json_does_not_abort_scan(tmp_path: Path) -> None:
     assert library.clip_count == 1
     event = next(iter(library.events.values()))
     assert event.city is None
+    assert event.street is None
+    assert event.latitude is None
+    assert event.longitude is None

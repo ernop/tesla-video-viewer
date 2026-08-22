@@ -22,7 +22,9 @@ from app.indexer import (
     library_from_index,
     scan_into_index,
 )
+from app.location import enrich_event_location, map_url
 from app.media import MediaError, extract_png, probe_duration, require_tool
+from app.plates import PlateBusy, PlateError, crop_path, start_plate_scan, status_for
 from app.scan import (
     DEFAULT_SEGMENT_SEC,
     Event,
@@ -58,6 +60,10 @@ class ScreenshotRequest(BaseModel):
 
 class OpenFolderRequest(BaseModel):
     path: str
+
+
+class PlateScanRequest(BaseModel):
+    force: bool = False
 
 
 def get_config() -> AppConfig:
@@ -243,7 +249,16 @@ def event_payload(event: Event, include_segments: bool) -> dict[str, object]:
         "cameras": cameras,
         "label": event.label,
         "city": event.city,
+        "street": event.street,
         "reason": event.reason,
+        "latitude": event.latitude,
+        "longitude": event.longitude,
+        "locationSource": event.location_source,
+        "mapUrl": (
+            map_url(event.latitude, event.longitude)
+            if event.latitude is not None and event.longitude is not None
+            else None
+        ),
         "date": event.start.strftime("%Y-%m-%d"),
         "time": event.start.strftime("%H:%M:%S"),
         "sourcePath": str(event.source_path),
@@ -444,6 +459,7 @@ def create_app(config: AppConfig, *, background_scan: bool = True) -> FastAPI:
             probe_event(event)
         except MediaError as exc:
             raise HTTPException(status_code=500, detail=str(exc)) from exc
+        enrich_event_location(event)
         return event_payload(event, include_segments=True)
 
     @app.get("/api/events/{event_id}/cameras/{camera}/segments/{index}")
@@ -523,6 +539,38 @@ def create_app(config: AppConfig, *, background_scan: bool = True) -> FastAPI:
             "written": written,
             "failures": failures,
         }
+
+    @app.get("/api/events/{event_id}/plates")
+    def plate_status(event_id: str) -> dict[str, object]:
+        get_event(event_id)
+        return status_for(event_id)
+
+    @app.post("/api/events/{event_id}/plates")
+    def plate_scan(event_id: str, body: PlateScanRequest = PlateScanRequest()) -> dict[str, object]:
+        event = get_event(event_id)
+        try:
+            probe_event(event)
+        except MediaError as exc:
+            raise HTTPException(status_code=500, detail=str(exc)) from exc
+        try:
+            return start_plate_scan(event, force=body.force, blocking=False)
+        except PlateBusy as exc:
+            raise HTTPException(status_code=409, detail=str(exc)) from exc
+        except PlateError as exc:
+            raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+    @app.get("/api/events/{event_id}/plates/crops/{crop_id}")
+    def plate_crop(event_id: str, crop_id: str) -> FileResponse:
+        get_event(event_id)
+        path = crop_path(crop_id)
+        if not path.is_file():
+            raise HTTPException(status_code=404, detail="Plate crop is gone. Scan the event again.")
+        return FileResponse(
+            path,
+            media_type="image/jpeg",
+            filename=f"{crop_id}.jpg",
+            headers={"Cache-Control": "private, max-age=3600"},
+        )
 
     @app.post("/api/open-folder")
     def open_folder(body: OpenFolderRequest) -> dict[str, object]:

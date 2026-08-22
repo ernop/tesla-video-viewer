@@ -19,11 +19,14 @@ const state = {
   elapsed: 0,
   playing: false,
   focused: null,
-  seeking: false,
   lastDumpFolder: null,
   videos: new Map(),
   loadedSegment: new Map(),
+  buffers: new Map(),
+  loadToken: new Map(),
 };
+
+let player = null;
 
 let draftSources = [];
 
@@ -53,6 +56,7 @@ const els = {
   dayEvents: document.getElementById("day-events"),
   viewerView: document.getElementById("viewer-view"),
   viewerTitle: document.getElementById("viewer-title"),
+  viewerPlace: document.getElementById("viewer-place"),
   viewerClock: document.getElementById("viewer-clock"),
   camGrid: document.getElementById("cam-grid"),
   play: document.getElementById("btn-play"),
@@ -61,6 +65,9 @@ const els = {
   showAll: document.getElementById("btn-show-all"),
   dumpStatus: document.getElementById("dump-status"),
   openDump: document.getElementById("btn-open-dump"),
+  findPlates: document.getElementById("btn-find-plates"),
+  plateStatus: document.getElementById("plate-status"),
+  plateList: document.getElementById("plate-list"),
   sourceStatus: document.getElementById("source-status"),
   folders: document.getElementById("folders-dialog"),
   sourceList: document.getElementById("source-list"),
@@ -113,6 +120,7 @@ function renderScanStatus(status) {
 
 let scanTimer = null;
 let scanWatchId = 0;
+let plateWatchId = 0;
 let lastLibraryReload = 0;
 let putInFlight = false;
 
@@ -271,6 +279,71 @@ function kindLabel(kind) {
   if (kind === "sentry") return "Sentry";
   if (kind === "recent") return "Recent";
   return "Other";
+}
+
+function formatCoord(value) {
+  if (typeof value !== "number" || !Number.isFinite(value)) {
+    return "";
+  }
+  return value.toFixed(5).replace(/\.?0+$/, "");
+}
+
+function placeLine(event) {
+  return [event.city, event.street].filter(Boolean).join(" · ");
+}
+
+function coordLine(event) {
+  if (typeof event.latitude !== "number" || typeof event.longitude !== "number") {
+    return "";
+  }
+  return `${formatCoord(event.latitude)}, ${formatCoord(event.longitude)}`;
+}
+
+function locationSourceLabel(source) {
+  if (source === "event.json") return "Tesla event pin";
+  if (source === "sei") return "clip GPS";
+  if (source === "mp4") return "clip tags";
+  return "";
+}
+
+function renderViewerPlace(event) {
+  if (!els.viewerPlace) {
+    return;
+  }
+  const line = placeLine(event);
+  const coords = coordLine(event);
+  els.viewerPlace.replaceChildren();
+  if (!line && !coords) {
+    els.viewerPlace.hidden = true;
+    return;
+  }
+  els.viewerPlace.hidden = false;
+  if (line) {
+    const place = document.createElement("span");
+    place.textContent = line;
+    els.viewerPlace.append(place);
+  }
+  if (coords) {
+    if (event.mapUrl) {
+      const link = document.createElement("a");
+      link.href = event.mapUrl;
+      link.target = "_blank";
+      link.rel = "noopener noreferrer";
+      link.textContent = coords;
+      els.viewerPlace.append(link);
+    } else {
+      const text = document.createElement("span");
+      text.textContent = coords;
+      els.viewerPlace.append(text);
+    }
+  }
+  const source = locationSourceLabel(event.locationSource);
+  if (source) {
+    const note = document.createElement("span");
+    note.className = "place-source";
+    note.textContent = source;
+    els.viewerPlace.append(note);
+  }
 }
 
 function renderSpan() {
@@ -464,7 +537,7 @@ function renderDayPanel() {
     rail.style.left = `${left}%`;
     rail.style.width = `${width}%`;
     rail.textContent = event.time.slice(0, 5);
-    rail.title = `${event.time} ${kindLabel(event.kind)} · ${event.sourceLabel}`;
+    rail.title = `${event.time} ${kindLabel(event.kind)} · ${event.sourceLabel}${placeLine(event) ? ` · ${placeLine(event)}` : ""}`;
     rail.addEventListener("click", () => openEvent(event.id));
     els.dayRail.append(rail);
 
@@ -480,11 +553,16 @@ function renderDayPanel() {
     source.className = "source-tag";
     source.textContent = event.sourceLabel;
     source.title = event.sourcePath;
+    const place = document.createElement("span");
+    place.className = "place";
+    const placeBits = [placeLine(event), coordLine(event)].filter(Boolean);
+    place.textContent = placeBits.join(" · ");
+    place.title = locationSourceLabel(event.locationSource) || "";
     const cams = document.createElement("span");
     cams.textContent = event.cameras.map((cam) => cam.label).join(" · ");
     const dur = document.createElement("span");
     dur.textContent = formatDuration(event.durationSec);
-    button.append(time, kind, source, cams, dur);
+    button.append(time, kind, source, place, cams, dur);
     button.addEventListener("click", () => openEvent(event.id));
     item.append(button);
     els.dayEvents.append(item);
@@ -507,19 +585,43 @@ function renderLibrary() {
   renderDayPanel();
 }
 
+function syncPlayerState() {
+  if (!player) {
+    return;
+  }
+  state.elapsed = player.elapsed();
+  state.playing = player.isPlaying();
+  for (const camera of state.videos.keys()) {
+    const index = player.loadedIndex(camera);
+    if (index == null) {
+      state.loadedSegment.set(camera, null);
+    } else {
+      state.loadedSegment.set(camera, index);
+    }
+  }
+}
+
 function pauseAll() {
+  if (player) {
+    player.pause();
+  }
   state.playing = false;
   els.play.textContent = "Play";
-  for (const video of state.videos.values()) {
-    video.pause();
+  for (const buf of state.buffers.values()) {
+    for (const video of buf.videos) {
+      video.pause();
+    }
   }
 }
 
 function playAll() {
+  if (player) {
+    player.play();
+  }
   state.playing = true;
   els.play.textContent = "Pause";
   for (const [camera, video] of state.videos) {
-    if (state.loadedSegment.get(camera) == null) {
+    if (player && player.loadedIndex(camera) == null) {
       continue;
     }
     const playAttempt = video.play();
@@ -529,117 +631,179 @@ function playAll() {
   }
 }
 
-function segmentAt(camera, elapsed) {
-  const track = state.event.cameras.find((item) => item.id === camera);
-  if (!track) {
-    return null;
-  }
-  for (const segment of track.segments) {
-    const local = elapsed - segment.offsetSec;
-    if (local < -0.05) {
-      continue;
-    }
-    if (local <= segment.durationSec + 0.08) {
-      return { segment, local: Math.max(0, local) };
-    }
-  }
-  return null;
-}
-
 function videoUrl(camera, index) {
   return `/api/events/${state.event.id}/cameras/${encodeURIComponent(camera)}/segments/${index}`;
 }
 
-function loadCamera(camera, elapsed, video) {
-  const hit = segmentAt(camera, elapsed);
-  const tile = video.closest(".cam-tile");
-  const missing = tile.querySelector(".missing");
-  if (!hit) {
-    state.loadedSegment.set(camera, null);
-    video.removeAttribute("src");
-    video.load();
-    missing.hidden = false;
-    return;
+function cameraTile(camera) {
+  const buf = bufferFor(camera);
+  const video = buf ? buf.videos[0] : state.videos.get(camera);
+  return video ? video.closest(".cam-tile") : null;
+}
+
+function bufferFor(camera) {
+  return state.buffers.get(camera);
+}
+
+function shownVideo(camera) {
+  const buf = bufferFor(camera);
+  return buf ? buf.videos[buf.shown] : state.videos.get(camera);
+}
+
+function hiddenVideo(camera) {
+  const buf = bufferFor(camera);
+  return buf ? buf.videos[1 - buf.shown] : null;
+}
+
+function nextLoadToken(camera) {
+  const token = (state.loadToken.get(camera) || 0) + 1;
+  state.loadToken.set(camera, token);
+  return token;
+}
+
+function loadTokenIsCurrent(camera, token) {
+  return state.loadToken.get(camera) === token;
+}
+
+function videoHoldsSegment(video, index) {
+  return video && video.dataset.segment === String(index) && Boolean(video.getAttribute("src"));
+}
+
+function swapIn(camera, incoming, local) {
+  const buf = bufferFor(camera);
+  const outgoing = buf.videos[buf.shown];
+  if (Number.isFinite(local)) {
+    incoming.currentTime = local;
   }
-  missing.hidden = true;
-  const already = state.loadedSegment.get(camera);
-  if (already === hit.segment.index && video.src) {
-    if (Math.abs(video.currentTime - hit.local) > 0.25 && !state.seeking) {
-      video.currentTime = hit.local;
+  if (incoming !== outgoing) {
+    incoming.classList.remove("standby");
+    outgoing.classList.add("standby");
+    outgoing.pause();
+    buf.shown = buf.videos.indexOf(incoming);
+    state.videos.set(camera, incoming);
+  }
+}
+
+function whenFrameReady(video, local, onReady) {
+  const show = () => {
+    if (local > 0.05 && Math.abs(video.currentTime - local) > 0.12) {
+      video.addEventListener("seeked", onReady, { once: true });
+      video.currentTime = local;
+      return;
     }
+    onReady();
+  };
+  if (video.readyState >= 2) {
+    show();
     return;
   }
-  state.loadedSegment.set(camera, hit.segment.index);
-  state.seeking = true;
-  video.src = videoUrl(camera, hit.segment.index);
-  const onReady = () => {
-    video.currentTime = hit.local;
-    state.seeking = false;
-    if (state.playing) {
+  video.addEventListener("loadeddata", show, { once: true });
+}
+
+function activateClip(camera, video, hit, token) {
+  whenFrameReady(video, hit.local, () => {
+    if (!loadTokenIsCurrent(camera, token) || !player) {
+      return;
+    }
+    swapIn(camera, video, hit.local);
+    player.ready(camera);
+    syncPlayerState();
+    if (player.isPlaying()) {
       const playAttempt = video.play();
       if (playAttempt && playAttempt.catch) {
         playAttempt.catch(() => {});
       }
     }
-  };
-  video.addEventListener("loadedmetadata", onReady, { once: true });
+    updateViewerHud();
+  });
+}
+
+function maybePrefetch(camera) {
+  if (!player || !state.event || player.isSeeking(camera)) {
+    return;
+  }
+  const track = state.event.cameras.find((item) => item.id === camera);
+  const index = player.loadedIndex(camera);
+  if (!track || index == null) {
+    return;
+  }
+  const next = track.segments[index + 1];
+  if (!next) {
+    return;
+  }
+  const shown = shownVideo(camera);
+  const remain = shown && Number.isFinite(shown.duration) ? shown.duration - shown.currentTime : 99;
+  if (remain > 5) {
+    return;
+  }
+  const hidden = hiddenVideo(camera);
+  if (!hidden || videoHoldsSegment(hidden, next.index)) {
+    return;
+  }
+  hidden.dataset.segment = String(next.index);
+  hidden.preload = "auto";
+  hidden.src = videoUrl(camera, next.index);
+}
+
+function bindPlayer() {
+  player = TeslaPlayback.createPlayer({
+    durationSec: state.event.durationSec,
+    cameras: state.event.cameras,
+    host: {
+      load(camera, hit) {
+        const tile = cameraTile(camera);
+        const missing = tile.querySelector(".missing");
+        missing.hidden = true;
+        const token = nextLoadToken(camera);
+        const shown = shownVideo(camera);
+        const hidden = hiddenVideo(camera);
+        if (videoHoldsSegment(shown, hit.segment.index)) {
+          activateClip(camera, shown, hit, token);
+          return;
+        }
+        if (hidden && videoHoldsSegment(hidden, hit.segment.index)) {
+          activateClip(camera, hidden, hit, token);
+          return;
+        }
+        const target = hidden && shown.getAttribute("src") ? hidden : shown;
+        target.dataset.segment = String(hit.segment.index);
+        target.src = videoUrl(camera, hit.segment.index);
+        activateClip(camera, target, hit, token);
+      },
+      sync(camera, local) {
+        const video = shownVideo(camera);
+        if (video && Math.abs(video.currentTime - local) > 0.25 && !player.isSeeking(camera)) {
+          video.currentTime = local;
+        }
+      },
+      clear(camera) {
+        const tile = cameraTile(camera);
+        const missing = tile.querySelector(".missing");
+        missing.hidden = false;
+      },
+      pause() {
+        els.play.textContent = "Play";
+        for (const buf of state.buffers.values()) {
+          for (const video of buf.videos) {
+            video.pause();
+          }
+        }
+      },
+    },
+  });
 }
 
 function seekTo(elapsed) {
-  if (!state.event) {
+  if (!state.event || !player) {
     return;
   }
-  state.elapsed = Math.min(Math.max(elapsed, 0), state.event.durationSec);
-  for (const [camera, video] of state.videos) {
-    loadCamera(camera, state.elapsed, video);
-  }
+  player.seekTo(elapsed);
+  syncPlayerState();
   updateViewerHud();
 }
 
 function masterCamera() {
-  const preferred = ["front", "back", "left_repeater", "right_repeater"];
-  for (const id of preferred) {
-    if (state.videos.has(id) && state.loadedSegment.get(id) != null) {
-      return id;
-    }
-  }
-  for (const [id, loaded] of state.loadedSegment) {
-    if (loaded != null) {
-      return id;
-    }
-  }
-  return null;
-}
-
-function onTimeUpdate(camera, video) {
-  if (!state.playing || state.seeking) {
-    return;
-  }
-  if (masterCamera() !== camera) {
-    return;
-  }
-  const hit = segmentAt(camera, state.elapsed);
-  const index = state.loadedSegment.get(camera);
-  const track = state.event.cameras.find((item) => item.id === camera);
-  const segment = track.segments[index];
-  if (!segment) {
-    return;
-  }
-  state.elapsed = segment.offsetSec + video.currentTime;
-  if (hit && hit.segment.index !== index) {
-    seekTo(state.elapsed);
-    return;
-  }
-  for (const [other, otherVideo] of state.videos) {
-    if (other === camera) {
-      continue;
-    }
-    loadCamera(other, state.elapsed, otherVideo);
-  }
-  updateViewerHud();
-  if (state.elapsed >= state.event.durationSec - 0.05) {
-    pauseAll();
-  }
+  return player ? player.masterCamera() : null;
 }
 
 function updateViewerHud() {
@@ -665,10 +829,15 @@ function buildViewer() {
   els.camGrid.replaceChildren();
   state.videos.clear();
   state.loadedSegment.clear();
+  state.buffers.clear();
+  state.loadToken.clear();
+  player = null;
   els.camGrid.dataset.layout = state.event.layout;
   els.camGrid.classList.remove("focus-mode");
   state.focused = null;
   els.showAll.hidden = true;
+  els.viewerTitle.textContent = `${state.event.date} ${state.event.time} · ${kindLabel(state.event.kind)} · ${state.event.sourceLabel} · ${state.event.cameras.length} cameras`;
+  renderViewerPlace(state.event);
   const extraIndex = { n: 0 };
   for (const camera of state.event.cameras) {
     const tile = document.createElement("div");
@@ -682,34 +851,56 @@ function buildViewer() {
     missing.className = "missing";
     missing.textContent = "No clip at this time";
     missing.hidden = true;
-    const video = document.createElement("video");
-    video.playsInline = true;
-    video.preload = "auto";
-    video.muted = true;
-    video.addEventListener("timeupdate", () => onTimeUpdate(camera.id, video));
-    video.addEventListener("ended", () => {
-      const next = segmentAt(camera.id, state.elapsed + 0.05);
-      if (next && next.segment.index !== state.loadedSegment.get(camera.id)) {
-        loadCamera(camera.id, state.elapsed + 0.05, video);
-        return;
+    const videos = [0, 1].map((slot) => {
+      const video = document.createElement("video");
+      video.playsInline = true;
+      video.preload = "auto";
+      video.muted = true;
+      if (slot === 1) {
+        video.classList.add("standby");
       }
-      if (masterCamera() === camera.id) {
-        pauseAll();
-      }
+      video.addEventListener("timeupdate", () => {
+        if (!player || state.videos.get(camera.id) !== video) {
+          return;
+        }
+        player.timeUpdate(camera.id, video.currentTime);
+        maybePrefetch(camera.id);
+        syncPlayerState();
+        updateViewerHud();
+      });
+      video.addEventListener("error", () => {
+        if (!player || !player.isSeeking(camera.id)) {
+          return;
+        }
+        if (video.dataset.segment === String(player.loadedIndex(camera.id))) {
+          player.ready(camera.id);
+        }
+      });
+      video.addEventListener("ended", () => {
+        if (!player || state.videos.get(camera.id) !== video) {
+          return;
+        }
+        player.ended(camera.id);
+        syncPlayerState();
+        updateViewerHud();
+      });
+      return video;
     });
     tile.addEventListener("click", () => {
       setFocus(state.focused === camera.id ? null : camera.id);
     });
-    tile.append(video, label, missing);
+    tile.append(videos[0], videos[1], label, missing);
     els.camGrid.append(tile);
-    state.videos.set(camera.id, video);
+    state.buffers.set(camera.id, { videos, shown: 0 });
+    state.videos.set(camera.id, videos[0]);
   }
-  els.viewerTitle.textContent = `${state.event.date} ${state.event.time} · ${kindLabel(state.event.kind)} · ${state.event.sourceLabel} · ${state.event.cameras.length} cameras`;
+  bindPlayer();
   seekTo(0);
 }
 
 function showLibrary() {
   pauseAll();
+  player = null;
   els.viewerView.hidden = true;
   els.libraryView.hidden = false;
   state.event = null;
@@ -733,6 +924,7 @@ async function openEvent(eventId) {
   showViewer();
   setHash(`e/${eventId}`);
   buildViewer();
+  loadPlateStatus();
 }
 
 async function dumpScreens(cameras) {
@@ -764,6 +956,119 @@ async function dumpScreens(cameras) {
     showBanner("");
   } catch (err) {
     els.dumpStatus.textContent = "";
+    showBanner(err.message);
+  }
+}
+
+function plateTimeLabel(elapsed) {
+  return formatElapsed(elapsed);
+}
+
+function renderPlates(status) {
+  if (!els.plateStatus) {
+    return;
+  }
+  const running = status.state === "loading" || status.state === "running";
+  els.findPlates.disabled = running;
+  els.findPlates.textContent = status.complete ? "Scan plates again" : "Find plates";
+  let line = status.message || "FastALPR reads front, rear, and repeater cameras.";
+  if (running && status.framesTotal) {
+    line = `${status.message} ${status.framesDone}/${status.framesTotal} frames`;
+    if (status.etaSec != null) {
+      line += ` · ~${Math.max(1, Math.round(status.etaSec))}s left`;
+    }
+  }
+  if (status.state === "error" && status.error) {
+    line = status.error;
+  }
+  els.plateStatus.textContent = line;
+  els.plateList.replaceChildren();
+  const plates = status.plates || [];
+  for (const plate of plates) {
+    const item = document.createElement("li");
+    const button = document.createElement("button");
+    button.type = "button";
+    const img = document.createElement("img");
+    img.alt = plate.text;
+    img.src = `/api/events/${state.event.id}/plates/crops/${plate.cropId}`;
+    const body = document.createElement("div");
+    const text = document.createElement("p");
+    text.className = "plate-text";
+    text.textContent = plate.text;
+    const meta = document.createElement("p");
+    meta.className = "plate-meta";
+    const conf = Math.round((plate.bestConfidence || 0) * 100);
+    meta.textContent = `${plate.cameraLabel} · ${plateTimeLabel(plate.firstElapsedSec)} · ${plate.count} hit${plate.count === 1 ? "" : "s"} · ${conf}%`;
+    body.append(text, meta);
+    button.append(img, body);
+    button.addEventListener("click", () => {
+      setFocus(plate.camera);
+      seekTo(plate.firstElapsedSec);
+    });
+    item.append(button);
+    els.plateList.append(item);
+  }
+}
+
+async function pollPlates(watchId) {
+  if (watchId !== plateWatchId || !state.event) {
+    return;
+  }
+  try {
+    const status = await api(`/api/events/${state.event.id}/plates`);
+    if (watchId !== plateWatchId || !state.event) {
+      return;
+    }
+    renderPlates(status);
+    if (status.state === "loading" || status.state === "running") {
+      setTimeout(() => pollPlates(watchId), 1000);
+    }
+  } catch (err) {
+    if (watchId !== plateWatchId) {
+      return;
+    }
+    showBanner(err.message);
+  }
+}
+
+function watchPlates() {
+  plateWatchId += 1;
+  pollPlates(plateWatchId);
+}
+
+async function loadPlateStatus() {
+  if (!state.event) {
+    return;
+  }
+  try {
+    const status = await api(`/api/events/${state.event.id}/plates`);
+    renderPlates(status);
+    if (status.state === "loading" || status.state === "running") {
+      watchPlates();
+    }
+  } catch (err) {
+    renderPlates({ state: "idle", plates: [], message: "" });
+    showBanner(err.message);
+  }
+}
+
+async function startPlateScan() {
+  if (!state.event) {
+    return;
+  }
+  els.findPlates.disabled = true;
+  try {
+    const status = await api(`/api/events/${state.event.id}/plates`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ force: Boolean(els.findPlates.textContent.includes("again")) }),
+    });
+    renderPlates(status);
+    if (status.state === "loading" || status.state === "running") {
+      watchPlates();
+    }
+  } catch (err) {
+    els.findPlates.disabled = false;
     showBanner(err.message);
   }
 }
@@ -953,6 +1258,8 @@ document.getElementById("btn-shot-one").addEventListener("click", () => {
 });
 
 document.getElementById("btn-shot-all").addEventListener("click", () => dumpScreens(null));
+
+els.findPlates.addEventListener("click", () => startPlateScan());
 
 els.openDump.addEventListener("click", async () => {
   if (!state.lastDumpFolder) {

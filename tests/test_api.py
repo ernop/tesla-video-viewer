@@ -20,6 +20,10 @@ def test_library_and_day_routes(tmp_path: Path) -> None:
     _touch(folder / "2023-08-21_15-30-45-back.mp4")
     _touch(folder / "2023-08-21_15-30-45-left_repeater.mp4")
     _touch(folder / "2023-08-21_15-30-45-right_repeater.mp4")
+    (folder / "event.json").write_text(
+        '{"city":"Austin","street":"S Congress Ave","est_lat":"30.2672","est_lon":"-97.7431","reason":"user_interaction"}',
+        encoding="utf-8",
+    )
     config = AppConfig(
         sources=[root],
         output_dir=tmp_path / "shots",
@@ -38,8 +42,18 @@ def test_library_and_day_routes(tmp_path: Path) -> None:
     day = client.get("/api/days/2023-08-21").json()
     assert day["eventCount"] == 1
     event_id = day["events"][0]["id"]
+    listed = day["events"][0]
+    assert listed["city"] == "Austin"
+    assert listed["street"] == "S Congress Ave"
+    assert listed["latitude"] == 30.2672
+    assert listed["longitude"] == -97.7431
+    assert listed["locationSource"] == "event.json"
+    assert "mlat=30.2672" in listed["mapUrl"]
     event = client.get(f"/api/events/{event_id}").json()
     assert event["layout"] == "four"
+    assert event["city"] == "Austin"
+    assert event["street"] == "S Congress Ave"
+    assert event["mapUrl"].startswith("https://www.openstreetmap.org/")
     assert {cam["id"] for cam in event["cameras"]} == {
         "front",
         "back",
