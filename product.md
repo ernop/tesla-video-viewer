@@ -1,9 +1,13 @@
 # Tesla video viewer
 
-Local web app for browsing TeslaCam footage on this machine. It is a calendar
-and multi-camera player for clips the car already wrote to USB or a copy of
-that disk. It does not talk to Tesla servers and does not copy or move the
-video files. Screenshots and plate crops are new files next to the app.
+The current app is a local calendar and multi-camera player for TeslaCam
+footage already on this machine. The target product is broader: ingest Tesla
+and other video, turn it into durable linked evidence, and make it easy to
+review footage, follow a plate or vehicle through its complete known history,
+find correlations, and analyze temporal, geographic, plate, vehicle, route,
+and FSD patterns. Current folder input reads videos in place; optional managed
+copies and user-authorized Tesla/cloud retrieval are planned input modes, not
+current behavior. Screenshots and analysis crops are new local files.
 
 Repo: https://github.com/ernop/tesla-video-viewer
 
@@ -16,26 +20,36 @@ why. If a path was tested and rejected, record the result so it is not
 proposed again as if it were unknown. How to run the app lives in
 `README.md`. Do not put local paths, secrets, or clip contents here.
 
-## Who it is for
+## Product goal
 
-Someone with a Tesla (this install was built around a 2023 Model Y with six
-cameras) who keeps SavedClips, SentryClips, and RecentClips on a USB drive
-or a folder dump, and wants to:
+Turn Tesla and other vehicle-related video into a systematic, persistent body
+of evidence for viewing and understanding the data:
 
-- find a save by day and time
-- watch every camera on one clock
-- grab full-resolution stills
-- read license plates from a clip and keep them across sessions
-- guess which US state (or territory) issued a plate from its serial format
-- browse every stored plate, including ones that could not be classified
-- open one plate and see every clip it appeared in, with when/where and a
-  map of those pins
-- see where a save happened
-- later: summarize a span of clips (a day, N videos, ~30 minutes of footage)
-  as the set of plates seen, how long each was in view, and which state
-  each is from
-- later: identify the car around a plate (make / model / year) if a library
-  exists that covers current US cars, not a 2013–2016 frozen set
+- find footage by day, time, location, route, plate, vehicle, or interval
+- treat a synchronized series as one **video set**, hiding normal one-minute
+  file boundaries from the user
+- watch every available camera on one clock and capture full-resolution stills
+- detect and read plates automatically, keep the evidence across sessions,
+  and retry or review weak results
+- give each plate a focused page containing its complete known history,
+  sightings, links to video, car images and attributes, time-of-day profile,
+  location profile, counts, and history distributions
+- find correlations between cars through repeated place, time, route, and
+  co-occurrence patterns, always linked back to supporting footage
+- chart plate jurisdictions, types, serial ranges, and likely issuance periods
+  over selected time intervals; California sequence position is a specific
+  useful issuance-year signal
+- identify vehicle type, color, make, model, and year when evidence supports
+  the claim and preserve uncertainty when it does not
+- persist route and reliable FSD/driver-assistance state so maps can show where
+  FSD was active, inactive, or unknown
+- run meaningful or slow work in the background and store its results durably
+  so pages load quickly instead of recomputing after every restart
+
+Every main page has one focus: library, interval, video set, plate/vehicle,
+aggregate vehicle and plate analysis, route/FSD map, or processing quality.
+Navigation between an aggregate, identity, sighting, and exact video moment
+must preserve context.
 
 ## What Tesla writes
 
@@ -57,7 +71,10 @@ Names look like `2023-08-21_15-30-45-front.mp4`. Layout on the USB drive:
 - `TeslaCam/EncryptedClips/` — same folders, but the MP4s and often
   `event.json` are encrypted. Only the recording car or
   https://dashcam.tesla.com (local decrypt after fetching keys) can open them.
-  This app skips those files.
+  The product intends to skip those files. The current filename-based scanner
+  has no explicit `EncryptedClips` exclusion, so valid-looking encrypted names
+  can still be indexed and then fail during playback or extraction; add the
+  exclusion rather than treating that failure as supported decryption.
 
 MP4s are H.264 High, `mp42`, with the `moov` atom at the end. Front is often
 2896×1876; other cameras 1448-wide. About one minute per file, ~36 fps.
@@ -108,11 +125,15 @@ still “contains” 1:01); one boolean `seeking` for the whole grid; replacing
 ## Public docs
 
 `README.md` is how to run the app and what the UI looks like. `product.md`
-is goals, intent, and decisions. Screenshots in `docs/` may show the real
-calendar and day list. **Do not publish identifiable real plates** (OCR
-text or crop photos of other people’s cars). Plate UI in the README uses
-obvious dummy labels only (`SAMPLE`, `DEMO 42`, `EXAMPLE`). Real scans stay
-in local SQLite and `plate-crops/`.
+is goals, intent, and decisions. `PRODUCT_ONLY.md` is the standalone,
+implementation-free description of the complete user-facing product: its
+inputs, current capabilities, planned capabilities, privacy boundary, and
+explicit exclusions. Keep it synchronized with this design record whenever
+the product surface changes. Screenshots in `docs/` may show the real calendar
+and day list. **Do not publish identifiable real plates** (OCR text or crop
+photos of other people’s cars). Plate UI in the README uses obvious dummy
+labels only (`SAMPLE`, `DEMO 42`, `EXAMPLE`). Real scans stay in local SQLite
+and `plate-crops/`.
 
 ## Location
 
@@ -179,15 +200,28 @@ one coordinate. A full moving map from the SEI track is not in the UI yet.
 The car page map is those discrete stored pins with times of day, not a
 live trail during playback.
 
+The full SEI route is now an explicit planned product surface. Persist
+high-frequency GPS and reliable Autopilot/FSD state, then synchronize it with
+playback and map route segments as FSD active, available but inactive, manual,
+or unknown. Show distance, duration, transitions, and sightings by state. Do
+not infer FSD from driving behavior when telemetry does not identify it.
+
 ## Product surface
 
-1. **Folders** — one or more TeslaCam roots. Missing disks stay listed and
-   drop out of the scan until they are attached again.
+1. **Inputs** — currently one or more TeslaCam roots. Missing disks stay
+   listed and drop out of the scan until attached again. Planned adapters
+   accept ordinary single- or multi-camera video, optional application-managed
+   media copies, and user-authorized Tesla/account/cloud retrieval.
 2. **Calendar** — days with clips are amber. Months with clips are listed.
-3. **Day** — 24-hour rail plus a list: time, Saved/Sentry/Recent, source,
-   place, cameras, duration.
-4. **Viewer** — all cameras on one scrubber. Click a camera to enlarge it.
-   Stitch and last-frame swap: see **Playback**.
+3. **Day / interval** — the current day page is a 24-hour rail plus a list:
+   time, Saved/Sentry/Recent, source, place, cameras, duration. The planned
+   interval page also accepts custom ranges, trips, N video sets, or an
+   approximate footage duration and summarizes plates, vehicles, states,
+   issuance periods, places, time profiles, and correlations.
+4. **Video set** — all cameras on one scrubber. Click a camera to enlarge it.
+   Stitch and last-frame swap: see **Playback**. A video set is one conceptual
+   event even when backed by many per-camera minute files; ordinary file
+   boundaries are not user-facing.
 5. **Screenshots** — current camera or all cameras as full-resolution PNGs
    under `output_dir/<event-start>/`.
 6. **Plates (per clip)** — FastALPR on the **front camera only**, sampled at
@@ -204,16 +238,36 @@ live trail during playback.
 8. **Plate catalog** — header **Plates** (`#/plates`) lists every unique
    plate in the database, not just the open clip. Columns: crop, text,
    state (or **Unclassified**), series, hit count, time in view, place.
-   Filters: All / Classified / Unclassified. Unclassified plates stay in
-   the list; they are not dropped. Click a row to open that plate’s car
-   page. The catalog is the index; the car page is the dossier.
+   Filters: All / Classified / Unclassified. **Raw pixels** removes smoothing
+   from catalog crop thumbnails. Unclassified plates stay in the list; they
+   are not dropped. Click a row to open that plate’s car page. The catalog is
+   the index; the car page is the dossier.
 9. **Car page** — `#/p/{PLATE}` is the dossier for one OCR string: every
    stored clip it appeared in, inlined where/when, and a map of those
    pins. See **Car page** below.
-10. **Day / span summary** — not built yet. The catalog and car page
-    both read the same store: for a day with N videos totaling ~30
-    minutes, the set of plates seen, how long each appeared, and which
-    state each is from.
+10. **Plate / vehicle profile** — expand the current car page with a complete
+    time-of-day profile, location profile, seen counts, first/last seen,
+    history distributions, representative car images, likely vehicle
+    attributes, issuance period, co-occurrences, and direct links to every
+    supporting sighting and video set.
+11. **Vehicle and plate analysis** — not built yet. For the full library or a
+    selected interval, chart jurisdiction, plate type/series/range, estimated
+    issuance period, vehicle type and attributes, classified/unclassified/
+    rejected quality, and changes over time. Aggregate bins always drill down
+    to their evidence.
+12. **Quality and retry queue** — not built yet. Low-quality or pattern-invalid
+    alleged plates are rejected with reason, retained as candidates, sent to
+    review, or retried using better frames/crops/cameras/analysis. Do not
+    silently promote them to trusted identities or silently discard plausible
+    vanity, temporary, specialty, or unsupported-jurisdiction plates.
+13. **Route / FSD map** — not built yet. Persist per-frame route and verified
+    assistance state; map where FSD was active, inactive, or unknown and link
+    every segment and transition to synchronized video.
+14. **Background jobs** — discovery, synchronization, OCR, classification,
+    vehicle analysis, telemetry decoding, quality review, and aggregates run
+    without blocking the existing library. Durable results and job state are
+    the source for quick page loads; meaningful results must not live only in
+    process memory.
 
 Keyboard in the viewer: Space play/pause, arrows skip 10s (Ctrl: 1 min),
 `s` screenshot focused camera, Shift+S all cameras, Esc leave focus then
@@ -250,6 +304,14 @@ index, virtualenv, and MP4s are gitignored.
 Scan is incremental: a later walk only re-reads files whose size or mtime
 changed. Save-and-scan returns immediately; a status line shows files while
 the walk runs in the background.
+
+The product rule for all non-instant work is **background + durable**. A job
+has queued/running/complete/failed/cancelled/needs-review state, progress, and
+an analysis version. Store useful partial or completed results in the database
+and load those first on every page. A restart resumes safe work or explicitly
+re-queues it. New analysis must not destroy the prior usable result until its
+replacement succeeds. Opening a page may prioritize its pending jobs, but
+must not hold the page blank while recomputing data already derived before.
 
 Plate tables in the same SQLite file (schema version still `"1"`, additive
 columns on `plates`): `plates` (unique text, best crop, stored jurisdiction),
@@ -293,6 +355,28 @@ state the car is in, then neighbors; it does not force a single answer.
 Vanity plates and unmatched strings stay **unclassified** and remain
 visible in the catalog.
 
+### Plate quality, retry, and issuance estimates — planned
+
+A detector box plus OCR text is only a candidate. Trusted sightings should
+consider detector/OCR confidence, crop size and sharpness, agreement across
+nearby frames, stable character alternatives, legitimate serial patterns,
+location consistency, and repeated evidence. If a reading matches no known
+valid pattern, reject it with a reason, keep it as low confidence, send it to
+**Needs review**, or schedule another pass over a better frame/crop/camera or
+new analysis version. Pattern mismatch is strong quality evidence but is not
+alone sufficient to permanently discard vanity, temporary, specialty, or
+unsupported-jurisdiction plates.
+
+User corrections, merge/split decisions, and false-positive rejections should
+retain the original machine result and persist. The plate catalog and charts
+must distinguish trusted, unclassified, rejected, and needs-review candidates.
+
+California sequence position can estimate when many normal plate series were
+issued. Add maintained serial ranges and produce an issuance year or range,
+matched series, confidence, and exceptions. This is plate issuance, not
+vehicle model year, registration ownership, or manufacturing date. Add the
+same analysis for other jurisdictions only when reliable sequence data exists.
+
 Classification runs when a plate row is written or refreshed
 (`plates.jurisdiction_*`, `best_event_id`), not only when the clip viewer
 renders. The catalog API is `GET /api/plates`. One plate’s sightings are
@@ -331,6 +415,14 @@ This is not a per-frame drive path. Appearance rows store the event pin
 available at scan time. Parked Sentry often has no SEI GPS; those clips
 only appear on the map if `event.json` had `est_lat` / `est_lon`.
 
+The planned plate page turns this dossier into the complete focused profile
+for the OCR identity and associated vehicle evidence: representative car
+images across dates/angles, likely type/color/make/model/year, issuance
+period, first/last seen, distinct days, sampled time in view, time-of-day and
+long-term distributions, location recurrence, co-occurring cars, and possible
+OCR collisions or plate transfers. Every statistic and chart point links to
+the underlying sightings and video sets.
+
 Why a dedicated hash page, not an expanding catalog row: the map, inline
 clips, and per-event list need a full page, and the clip viewer already
 uses Prev/Next for seeking. Identity click (the plate text) must not
@@ -367,7 +459,7 @@ than plate detect-then-skip-OCR. **Do not add RF-DETR as a time-saving gate.**
 It remains a valid way to get real vehicle boxes for crops or make/model ID,
 but that makes scans slower, not faster.
 
-### Make / model / year — not implemented
+### Make / model / year — planned, not implemented
 
 There is no make/model/year library in this app. FastALPR reads plates only.
 
@@ -391,21 +483,27 @@ to avoid a 2016 freeze is CLIP/SigLIP against a make+model list we keep,
 with weak year accuracy and extra CPU cost on a vehicle crop.
 
 Do not wire Jordo23/Stanford Cars as if they ID current street traffic.
-Revisit only if Car-1000 weights appear, we train our own, we accept CLIP, or
-we pay for Plate Recognizer MMC.
+Vehicle type/color/make/model/year is now an explicit planned product
+capability, not an excluded one. Implement it with current-enough evidence,
+confidence and alternatives, durable source images, and a review path. Viable
+paths remain Car-1000 weights if published, training our own, accepting a
+CLIP/SigLIP approach with clear uncertainty, or paying for a maintained
+recognizer. Unsupported attributes remain unknown.
 
 ## Out of scope
 
-- Decrypting `EncryptedClips`
-- Uploading clips or talking to Tesla's fleet APIs
+- Circumventing or performing unauthorized decryption of protected clips
 - Editing or deleting footage on the USB drive
-- A live GPS trail during playback (SEI is only used for a single event
-  pin today; the car page maps those stored pins, not the 36 Hz track)
-- Copying Tesla MP4s into the app tree
 - Binding the server on a public interface
 - A vehicle-detector gate in front of plate OCR (tested; slower on this CPU)
-- Make/model/year ID until a library covers current US cars
+- Authoritative identification of a vehicle owner
 - Treating overlapping serial formats (e.g. `ABC1234`) as a single certain
   state; those stay multi-candidate or unclassified-looking (low confidence)
 - Dropping unclassified plates from the catalog
-- Classifying from plate artwork instead of serial format
+- Silently promoting low-quality or pattern-invalid OCR to a trusted plate
+- Silently discarding plausible unsupported, vanity, temporary, or specialty
+  plates merely to make analytics look cleaner
+- Claiming plate, vehicle, location, issuance year, or FSD state with certainty
+  when the evidence does not support it
+- Classifying jurisdiction from plate artwork without a validated method and
+  explicit uncertainty

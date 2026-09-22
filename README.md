@@ -3,8 +3,8 @@
 [![CI](https://github.com/ernop/tesla-video-viewer/actions/workflows/ci.yml/badge.svg)](https://github.com/ernop/tesla-video-viewer/actions/workflows/ci.yml)
 
 Local web app for TeslaCam footage already on this machine. Point it at one
-or more folders, browse by day, and play every camera on one clock. It does
-not talk to Tesla servers and it does not move the MP4s.
+or more folders, browse by day, and play every camera on one clock. The
+current build does not talk to Tesla servers and reads MP4s in place.
 
 Built around a 2023 Model Y six-camera layout. Other TeslaCam dumps with the
 same file names work too.
@@ -124,9 +124,17 @@ python -m pytest
 Playback stitch tests need Node (CI installs it). They replay a real Recent
 event’s timestamps so a freeze at 1:01 fails the build.
 
-## Not in scope
+## Not in the current build
 
-- Decrypting `EncryptedClips`
-- Uploading clips or calling Tesla’s fleet APIs
-- Editing or deleting footage on the USB drive
-- A live moving map (GPS is a single pin today)
+- Other-video import without Tesla naming
+- Optional application-managed media copies
+- Tesla account, fleet, or cloud-video retrieval
+- A live route and FSD-state map (GPS is a single event pin today)
+- Vehicle type, color, make, model, or year recognition
+- Plate quality-review and retry queues
+- Interval-level vehicle and plate distribution charts
+
+The product direction for these capabilities is defined in `PRODUCT_ONLY.md`.
+Unauthorized decryption, editing or deleting original footage, unsupported
+identity claims, and public-by-default hosting remain outside the product
+boundary.
