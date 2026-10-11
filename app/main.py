@@ -50,6 +50,7 @@ from app.scan import (
 
 LOGGER = logging.getLogger("tesla-video-viewer")
 WEB_DIR = Path(__file__).resolve().parent.parent / "web"
+MEDIA_PLAYER_DIR = WEB_DIR / "media-player"
 MAX_SCREENSHOT_CAMERAS = 16
 
 _lock = threading.Lock()
@@ -335,6 +336,16 @@ def get_event(event_id: str) -> Event:
     if event is None:
         raise HTTPException(status_code=404, detail=f"Unknown event {event_id}.")
     return event
+
+
+class RevalidatedStaticFiles(StaticFiles):
+    """Static files the browser checks on every load: a new copy of the media player replaces its
+    files without any version in the page's links."""
+
+    def file_response(self, *args, **kwargs):
+        response = super().file_response(*args, **kwargs)
+        response.headers["Cache-Control"] = "no-cache"
+        return response
 
 
 def create_app(config: AppConfig, *, background_scan: bool = True) -> FastAPI:
@@ -737,6 +748,7 @@ def create_app(config: AppConfig, *, background_scan: bool = True) -> FastAPI:
 
     if not WEB_DIR.is_dir():
         raise FileNotFoundError(f"Missing web UI folder: {WEB_DIR}")
+    app.mount("/media-player", RevalidatedStaticFiles(directory=MEDIA_PLAYER_DIR), name="media-player")
     app.mount("/", StaticFiles(directory=WEB_DIR, html=True), name="web")
     return app
 

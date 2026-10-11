@@ -327,9 +327,16 @@ The video-set page is focused on reviewing one coherent recording.
 
 **Available.**
 
-- Space: play or pause.
-- Left/Right: move ten seconds.
-- Ctrl/Command + Left/Right: move one minute.
+- Space or K: play or pause.
+- Left/Right: move five seconds; with Shift one second; with Ctrl one minute.
+- J/L: move ten seconds.
+- 0 to 9: jump to that tenth of the video set.
+- Backspace: return to where the last jump left.
+- PageUp/PageDown, once the player has focus: previous or next plate sighting.
+- Comma/period: step one frame. Brackets: slower or faster, every camera
+  together.
+- F: full screen.
+- ?: list every key.
 - `s`: save the focused or primary camera.
 - Shift+`S`: save every available camera.
 - Escape: leave camera focus, then return to the prior page.

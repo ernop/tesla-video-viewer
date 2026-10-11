@@ -19,7 +19,8 @@ are empty. Each amber cell shows how many events that day starts with.
 Pick a day and you get a 24-hour rail plus a list: time, Saved / Sentry /
 Recent, which disk, place if we could read it, which cameras exist, duration.
 
-**Player.** All cameras share one scrubber. Click a camera to enlarge it.
+**Player.** All cameras share one clock and one time scale, marked with the
+time and with every plate sighting. Click a camera to enlarge it.
 Screenshots write full-resolution PNGs. Place (city, street, map pin) sits
 above the grid when the clip has it.
 
@@ -48,20 +49,28 @@ your machine.
   2025.44.25+ can embed GPS in the video. Recent clips get a pin from that
   GPS when there is no sidecar.
 - **Plates.** FastALPR on the front camera at 1 fps. Results live in
-  `clip-index.sqlite3`. Click a plate, use scrubber marks, or open the
-  catalog / car page from the header.
+  `clip-index.sqlite3`. Click a plate, click its mark on the time scale
+  (one color per plate), step through sightings with PageUp / PageDown, or
+  open the catalog / car page from the header.
 - **Stills.** Screenshot this camera, or all cameras, at the current time.
   Files land in `output_dir/<event-start>/`.
 - **Incremental index.** SQLite next to `config.json`. Restart loads it at
   once. A later scan only re-reads files whose size or mtime changed.
 
-Keyboard in the player:
+Keyboard in the player (**?** lists every key):
 
 | Key | Action |
 | --- | --- |
-| Space | Play / pause |
-| Left / Right | Skip 10 seconds (Ctrl: 1 minute) |
-| s | Screenshot the focused camera |
+| Space, K | Play / pause |
+| Left / Right | Back / forward 5 seconds (Shift: 1 second, Ctrl: 1 minute) |
+| J / L | Back / forward 10 seconds |
+| 0 to 9 | Jump to 0% to 90% of the clip |
+| Backspace | Back to where the last jump left |
+| PageUp / PageDown | Previous / next plate sighting, once the player has focus (click it; its edge turns amber) |
+| , / . | Previous / next frame |
+| [ / ] | Slower / faster, every camera together |
+| F | Full screen |
+| s | Screenshot the enlarged camera, or the main one |
 | Shift+S | Screenshot every camera |
 | Esc | Leave focus, then back to the day |
 
@@ -95,6 +104,12 @@ python -m venv .venv
 pip install -r requirements.txt
 copy config.example.json config.json
 ```
+
+The player's controls come from the media-player library, of which this repo
+keeps a copy in `web/media-player/`; nothing else needs to be next to this
+folder. Never edit the copy: to take a library change, run the library's
+`copy-into.sh web/media-player` from this folder (in Git Bash on Windows),
+then `pytest`, which fails on a copy that differs from its checksums.
 
 Edit `config.json`:
 

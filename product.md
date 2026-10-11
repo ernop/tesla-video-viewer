@@ -218,17 +218,29 @@ not infer FSD from driving behavior when telemetry does not identify it.
    interval page also accepts custom ranges, trips, N video sets, or an
    approximate footage duration and summarizes plates, vehicles, states,
    issuance periods, places, time profiles, and correlations.
-4. **Video set** — all cameras on one scrubber. Click a camera to enlarge it.
-   Stitch and last-frame swap: see **Playback**. A video set is one conceptual
-   event even when backed by many per-camera minute files; ordinary file
-   boundaries are not user-facing.
+4. **Video set** — all cameras on one clock and one time scale. Click a camera
+   to enlarge it. Stitch and last-frame swap: see **Playback**. A video set is
+   one conceptual event even when backed by many per-camera minute files;
+   ordinary file boundaries are not user-facing.
+   The controls, scale and keys are the shared media-player library (this
+   repo's copy in `web/media-player/`, served at `/media-player/` with
+   `no-cache`; owner, 2026-10-11: copy in every library, never depend on a
+   checkout sitting next to this one, as `../media-player` was until then): one
+   player, so keys and controls are the same wherever it is used. The camera
+   grid is its stage through a `MediaPlayer.Source`
+   (`CameraClock` in `web/app.js`) over `TeslaPlayback`, with `sound: false`.
+   The library's S saves through this app's screenshot endpoint, so files
+   land in the usual folder. The page itself keeps only Esc and Shift+S.
 5. **Screenshots** — current camera or all cameras as full-resolution PNGs
    under `output_dir/<event-start>/`.
 6. **Plates (per clip)** — FastALPR on the **front camera only**, sampled at
    **1 fps**. Opening a clip queues a scan if that event is not already stored.
    **Scan plates again** forces a new pass. Hits persist in SQLite.
    Iridescent boxes mark plates on the video (lerp between consecutive hits
-   ≤1.5s apart). Scrubber marks and Prev/Next step through hits.    Open a hit
+   ≤1.5s apart). Marks on the time scale (one color per plate; the open plate
+   amber, the others faded) and Prev/Next step through hits; so do PageUp and
+   PageDown once the player has focus. Clicking a mark or reaching it with
+   PageUp/PageDown opens that hit without moving the clock.    Open a hit
    for **Plate** (tight still), **Car** (heuristic square crop), or **Full
    frame**. The OCR text is classified to a US jurisdiction at write time
    (see below) and shown on the card and overlay. The plate number and
@@ -269,10 +281,13 @@ not infer FSD from driving behavior when telemetry does not identify it.
     the source for quick page loads; meaningful results must not live only in
     process memory.
 
-Keyboard in the viewer: Space play/pause, arrows skip 10s (Ctrl: 1 min),
-`s` screenshot focused camera, Shift+S all cameras, Esc leave focus then
-back to the day (or back to the car page if the clip was opened from
-one). Esc on the car page and catalog returns to the previous list.
+Keyboard in the viewer: the media player's keys (? lists them: Space/K
+play/pause, arrows 5s with Shift 1s and Ctrl 1 min, J/L 10s, 0–9, Backspace,
+frame steps, speed, F full screen, and PageUp/PageDown through plate
+sightings once the player has focus), `s` screenshot focused camera,
+Shift+S all cameras, Esc leave focus then back to the day (or back to the
+car page if the clip was opened from one). Esc on the car page and catalog
+returns to the previous list.
 
 ## Hardware this install runs on
 

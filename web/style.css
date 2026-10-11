@@ -347,6 +347,10 @@ button.dump-all {
   min-height: calc(100vh - 5rem);
 }
 
+.viewer-view[hidden] {
+  display: none;
+}
+
 .viewer-bar {
   display: grid;
   grid-template-columns: auto 1fr auto;
@@ -402,6 +406,38 @@ button.dump-all {
   gap: 0.35rem;
   padding: 0 0.7rem;
   min-height: 22rem;
+}
+
+.viewer-view > .mp {
+  --mp-bg: var(--bg);
+  --mp-border: var(--line);
+  --mp-accent: var(--amber);
+  --mp-accent-text: #000;
+  --mp-hover: var(--cell);
+  --mp-marker: var(--tan);
+  --mp-font: "Segoe UI", "Helvetica Neue", sans-serif;
+  --mp-radius: 0;
+  --mp-radius-sm: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  width: auto;
+  margin: 0 0.7rem;
+}
+
+.viewer-view > .mp.is-fullscreen {
+  margin: 0;
+}
+
+.viewer-view .mp-stage {
+  flex: 1;
+  display: flex;
+  min-height: 22rem;
+}
+
+.viewer-view .mp-stage > .cam-grid {
+  min-height: 0;
+  padding: 0;
 }
 
 .cam-grid[data-layout="six"] {
@@ -554,7 +590,7 @@ button.dump-all {
   to { filter: hue-rotate(360deg) saturate(1.35); }
 }
 
-.transport, .dump-bar, .plate-bar {
+.dump-bar, .plate-bar {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem 0.7rem;
@@ -783,45 +819,6 @@ button.dump-all {
   .plate-zoom-shots {
     grid-template-columns: 1fr;
   }
-}
-
-.scrub-wrap {
-  flex: 1;
-  min-width: 12rem;
-}
-
-.scrub-track {
-  position: relative;
-}
-
-.plate-marks {
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: -0.35rem;
-  height: calc(100% + 0.7rem);
-  pointer-events: none;
-  z-index: 1;
-}
-
-.plate-mark {
-  position: absolute;
-  top: 0;
-  width: 3px;
-  height: 100%;
-  padding: 0;
-  border: 0;
-  transform: translateX(-50%);
-  pointer-events: auto;
-  opacity: 0.4;
-  background: var(--tan);
-}
-
-.plate-mark.active {
-  opacity: 1;
-  width: 5px;
-  background: var(--amber);
-  z-index: 2;
 }
 
 .plates-view {
@@ -1103,14 +1100,7 @@ button.dump-all {
   margin-top: 0.45rem;
 }
 
-.scrub-wrap input {
-  position: relative;
-  z-index: 3;
-  width: 100%;
-  accent-color: var(--amber);
-}
-
-.scrub-readout, .dump-status {
+.dump-status {
   margin: 0;
   font-family: ui-monospace, "Cascadia Mono", monospace;
   color: var(--tan);

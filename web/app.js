@@ -42,6 +42,8 @@ const state = {
 };
 
 let player = null;
+let clock = null;
+let mediaPlayer = null;
 let plateOverlayObserver = null;
 let carMap = null;
 
@@ -76,10 +78,6 @@ const els = {
   viewerPlace: document.getElementById("viewer-place"),
   viewerClock: document.getElementById("viewer-clock"),
   camGrid: document.getElementById("cam-grid"),
-  play: document.getElementById("btn-play"),
-  scrubber: document.getElementById("scrubber"),
-  plateMarks: document.getElementById("plate-marks"),
-  scrubReadout: document.getElementById("scrub-readout"),
   showAll: document.getElementById("btn-show-all"),
   dumpStatus: document.getElementById("dump-status"),
   openDump: document.getElementById("btn-open-dump"),
@@ -665,25 +663,40 @@ function syncPlayerState() {
   }
 }
 
-function pauseAll() {
-  if (player) {
-    player.pause();
-  }
-  state.playing = false;
-  els.play.textContent = "Play";
+function stopVideos() {
   for (const buf of state.buffers.values()) {
     for (const video of buf.videos) {
       video.pause();
     }
   }
+  if (clock) {
+    clock.emit("pause");
+    if (clock.ended) {
+      clock.emit("ended");
+    }
+  }
+}
+
+function pauseAll() {
+  if (player) {
+    player.pause();
+  }
+  state.playing = false;
+  stopVideos();
 }
 
 function playAll() {
+  if (state.event && state.elapsed >= state.event.durationSec - 0.05) {
+    seekTo(0);
+  }
   if (player) {
     player.play();
   }
   state.playing = true;
-  els.play.textContent = "Pause";
+  if (clock) {
+    clock.emit("play");
+    clock.emit("playing");
+  }
   for (const [camera, video] of state.videos) {
     if (player && player.loadedIndex(camera) == null) {
       continue;
@@ -846,12 +859,8 @@ function bindPlayer() {
         missing.hidden = false;
       },
       pause() {
-        els.play.textContent = "Play";
-        for (const buf of state.buffers.values()) {
-          for (const video of buf.videos) {
-            video.pause();
-          }
-        }
+        state.playing = false;
+        stopVideos();
       },
     },
   });
@@ -863,11 +872,113 @@ function seekTo(elapsed) {
   }
   player.seekTo(elapsed);
   syncPlayerState();
+  if (clock) {
+    clock.emit("seeking");
+  }
   updateViewerHud();
+  if (clock) {
+    clock.emit("seeked");
+  }
 }
 
 function masterCamera() {
   return player ? player.masterCamera() : null;
+}
+
+const CameraClock = typeof MediaPlayer === "undefined" ? null : class extends MediaPlayer.Source {
+  constructor() {
+    super();
+    this.rate = 1;
+  }
+
+  get currentTime() {
+    return player ? player.elapsed() : state.elapsed;
+  }
+
+  set currentTime(time) {
+    seekTo(time);
+  }
+
+  get duration() {
+    return state.event ? state.event.durationSec : NaN;
+  }
+
+  get paused() {
+    return !(player && player.isPlaying());
+  }
+
+  get ended() {
+    return Boolean(state.event) && this.paused && this.currentTime >= state.event.durationSec - 0.05;
+  }
+
+  get seeking() {
+    return Boolean(player && state.event) && state.event.cameras.some((camera) => player.isSeeking(camera.id));
+  }
+
+  get playbackRate() {
+    return this.rate;
+  }
+
+  set playbackRate(rate) {
+    this.rate = rate;
+    for (const buf of state.buffers.values()) {
+      for (const video of buf.videos) {
+        // A new src resets playbackRate to defaultPlaybackRate.
+        video.defaultPlaybackRate = rate;
+        video.playbackRate = rate;
+      }
+    }
+    this.emit("ratechange");
+  }
+
+  get defaultPlaybackRate() {
+    return 1;
+  }
+
+  set defaultPlaybackRate(rate) {}
+
+  play() {
+    playAll();
+    return Promise.resolve();
+  }
+
+  pause() {
+    pauseAll();
+  }
+};
+
+function attachMediaPlayer() {
+  if (!CameraClock) {
+    showBanner("The media player is missing: clone media-player next to this folder (README, Run).");
+    return;
+  }
+  const title = `Tesla ${state.event.date} ${state.event.time}`;
+  if (mediaPlayer) {
+    mediaPlayer.title = title;
+    clock.emit("emptied");
+  } else {
+    clock = new CameraClock();
+    mediaPlayer = MediaPlayer.attach(clock, {
+      stage: els.camGrid,
+      kind: "video",
+      sound: false,
+      title,
+      saveFrame: saveShownFrame,
+    });
+    mediaPlayer.addControls(els.showAll);
+  }
+  clock.playbackRate = clock.rate;
+  clock.emit("loadedmetadata");
+  clock.emit("durationchange");
+  clock.emit("timeupdate");
+}
+
+async function saveShownFrame() {
+  const result = await dumpScreens([state.focused || masterCamera()].filter(Boolean));
+  if (!result.ok) {
+    throw new Error(result.message);
+  }
+  return result.message;
 }
 
 function lerp(a, b, t) {
@@ -1016,10 +1127,10 @@ function updateViewerHud() {
     return;
   }
   els.viewerClock.textContent = formatClock(state.event.start, state.elapsed);
-  els.scrubber.max = String(state.event.durationSec);
-  els.scrubber.value = String(state.elapsed);
-  els.scrubReadout.textContent = `${formatScrub(state.elapsed)} / ${formatScrub(state.event.durationSec)}`;
   updatePlateOverlays();
+  if (clock) {
+    clock.emit("timeupdate");
+  }
 }
 
 function setFocus(camera) {
@@ -1108,8 +1219,10 @@ function buildViewer() {
   const start = typeof state.pendingSeek === "number" ? state.pendingSeek : 0;
   state.pendingSeek = null;
   seekTo(start);
+  attachMediaPlayer();
   state.selectedPlate = null;
   state.plateHitIndex = 0;
+  state.plateStatus = null;
   hidePlateZoom();
   renderPlateMarks();
   if (plateOverlayObserver) {
@@ -1685,11 +1798,11 @@ async function openEvent(eventId) {
 
 async function dumpScreens(cameras) {
   if (!state.event) {
-    return;
+    return { ok: false, message: "No clip is open." };
   }
   if (Array.isArray(cameras) && cameras.length === 0) {
     showBanner("No camera is loaded.");
-    return;
+    return { ok: false, message: "No camera is loaded." };
   }
   els.dumpStatus.textContent = "Writing PNGs…";
   try {
@@ -1710,9 +1823,12 @@ async function dumpScreens(cameras) {
       : `Wrote ${count} PNG(s) to ${result.folder}`;
     els.openDump.hidden = false;
     showBanner("");
+    const wrote = count === 1 ? "Wrote 1 PNG" : `Wrote ${count} PNGs`;
+    return { ok: count > 0, message: failed ? `${wrote}; ${failed} camera(s) had no frame` : wrote };
   } catch (err) {
     els.dumpStatus.textContent = "";
     showBanner(err.message);
+    return { ok: false, message: err.message };
   }
 }
 
@@ -1852,52 +1968,69 @@ function openPlateShot(kind) {
   }
 }
 
-function goToPlateHit(plate, index) {
+function selectPlateHit(plate, index) {
   if (!plate || !plate.hits || !plate.hits.length) {
-    return;
+    return null;
   }
   const bounded = Math.min(Math.max(index, 0), plate.hits.length - 1);
   state.selectedPlate = plate.text;
   state.plateHitIndex = bounded;
   const hit = plate.hits[bounded];
   setFocus(hit.camera);
-  seekTo(hit.elapsedSec);
   renderPlates(state.plateStatus);
   showPlateZoom(plate, hit);
+  return hit;
+}
+
+function goToPlateHit(plate, index) {
+  const hit = selectPlateHit(plate, index);
+  if (!hit) {
+    return;
+  }
+  if (mediaPlayer) {
+    mediaPlayer.seek(Number(hit.elapsedSec), `${plate.text} · ${hit.cameraLabel}`, "plate");
+  } else {
+    seekTo(hit.elapsedSec);
+  }
+}
+
+function plateHitAt(elapsed) {
+  const plates = state.plateStatus && state.plateStatus.plates ? state.plateStatus.plates : [];
+  const selectedFirst = plates.slice().sort((a, b) => (b.text === state.selectedPlate) - (a.text === state.selectedPlate));
+  for (const plate of selectedFirst) {
+    const index = (plate.hits || []).findIndex((hit) => Math.abs(Number(hit.elapsedSec) - elapsed) < 0.001);
+    if (index !== -1) {
+      return { plate, index };
+    }
+  }
+  return null;
 }
 
 function renderPlateMarks() {
-  if (!els.plateMarks || !state.event) {
-    return;
-  }
-  els.plateMarks.replaceChildren();
-  const duration = state.event.durationSec || 0;
-  if (!duration) {
+  if (!mediaPlayer || !state.event) {
     return;
   }
   const plates = state.plateStatus && state.plateStatus.plates ? state.plateStatus.plates : [];
+  const markers = [];
   for (const plate of plates) {
-    const hits = plate.hits || [];
-    hits.forEach((hit, index) => {
-      const mark = document.createElement("button");
-      mark.type = "button";
-      mark.className = "plate-mark";
-      if (plate.text === state.selectedPlate) {
-        mark.classList.add("active");
-      }
-      const hue = plateHue(plate.text);
-      mark.style.background = plate.text === state.selectedPlate ? "var(--amber)" : `hsl(${hue} 55% 52%)`;
-      mark.style.left = `${(Number(hit.elapsedSec) / duration) * 100}%`;
-      const stateCode = jurisdictionShort(plate);
-      mark.title = `${plate.text}${stateCode ? ` ${stateCode}` : ""} · ${plateTimeLabel(hit.elapsedSec)} · ${hit.cameraLabel}`;
-      mark.addEventListener("click", (event) => {
-        event.preventDefault();
-        event.stopPropagation();
-        goToPlateHit(plate, index);
+    const hue = plateHue(plate.text);
+    let color = `hsl(${hue} 55% 52%)`;
+    if (plate.text === state.selectedPlate) {
+      color = "var(--amber)";
+    } else if (state.selectedPlate) {
+      color = `hsl(${hue} 55% 52% / 0.45)`;
+    }
+    const stateCode = jurisdictionShort(plate);
+    (plate.hits || []).forEach((hit, index) => {
+      markers.push({
+        t: Number(hit.elapsedSec),
+        label: `${plate.text}${stateCode ? ` ${stateCode}` : ""} · ${hit.cameraLabel}`,
+        id: `${plate.text}#${index}`,
+        color,
       });
-      els.plateMarks.append(mark);
     });
   }
+  mediaPlayer.setMarkers(markers, "Plate");
 }
 
 function renderPlates(status) {
@@ -2316,19 +2449,15 @@ document.getElementById("btn-back").addEventListener("click", () => {
   renderLibrary();
 });
 
-els.play.addEventListener("click", () => {
-  if (state.playing) {
-    pauseAll();
+els.viewerView.addEventListener("media-player:seek", (event) => {
+  const { to, cause } = event.detail;
+  if (cause !== "marker" && cause !== "scale") {
     return;
   }
-  playAll();
-});
-
-document.getElementById("btn-back-10").addEventListener("click", () => seekTo(state.elapsed - 10));
-document.getElementById("btn-fwd-10").addEventListener("click", () => seekTo(state.elapsed + 10));
-
-els.scrubber.addEventListener("input", () => {
-  seekTo(Number(els.scrubber.value));
+  const found = plateHitAt(to);
+  if (found) {
+    selectPlateHit(found.plate, found.index);
+  }
 });
 
 els.showAll.addEventListener("click", () => setFocus(null));
@@ -2378,8 +2507,10 @@ els.openDump.addEventListener("click", async () => {
   }
 });
 
-document.addEventListener("keydown", (event) => {
-  if (event.target && ["INPUT", "TEXTAREA"].includes(event.target.tagName)) {
+// On window, after the media player's own keys on document: a key it took (Esc closing its keys
+// panel) arrives here with defaultPrevented.
+window.addEventListener("keydown", (event) => {
+  if (event.defaultPrevented || (event.target && ["INPUT", "TEXTAREA"].includes(event.target.tagName))) {
     return;
   }
   if (els.viewerView.hidden) {
@@ -2396,27 +2527,14 @@ document.addEventListener("keydown", (event) => {
     }
     return;
   }
-  if (event.key === " ") {
-    event.preventDefault();
-    if (state.playing) {
-      pauseAll();
-    } else {
-      playAll();
-    }
-  } else if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
-    event.preventDefault();
-    const step = event.ctrlKey || event.metaKey ? 60 : 10;
-    const delta = event.key === "ArrowLeft" ? -step : step;
-    seekTo(state.elapsed + delta);
-  } else if (event.key === "Escape") {
+  if (event.key === "Escape") {
     if (state.focused) {
       setFocus(null);
     } else {
       document.getElementById("btn-back").click();
     }
-  } else if (event.key === "s") {
-    dumpScreens([state.focused || masterCamera()].filter(Boolean));
-  } else if (event.key === "S") {
+  } else if (event.key.toLowerCase() === "s" && event.shiftKey && !event.ctrlKey && !event.altKey && !event.metaKey) {
+    event.preventDefault();
     dumpScreens(null);
   }
 });
