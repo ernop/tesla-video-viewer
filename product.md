@@ -283,8 +283,9 @@ not infer FSD from driving behavior when telemetry does not identify it.
 
 Keyboard in the viewer: the media player's keys (? lists them: Space/K
 play/pause, arrows 5s with Shift 1s and Ctrl 1 min, J/L 10s, 0–9, Backspace,
-frame steps, speed, F full screen, and PageUp/PageDown through plate
-sightings once the player has focus), `s` screenshot focused camera,
+frame steps, speed, R repeat (the video set starts again from its start each
+time it ends; not remembered), F full screen, and PageUp/PageDown through
+plate sightings once the player has focus), `s` screenshot focused camera,
 Shift+S all cameras, Esc leave focus then back to the day (or back to the
 car page if the clip was opened from one). Esc on the car page and catalog
 returns to the previous list.
